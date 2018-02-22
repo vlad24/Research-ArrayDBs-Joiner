@@ -30,7 +30,7 @@ public abstract class BiGraphParser {
 
     abstract boolean isCommentLine(String line);
 
-    abstract BiGraph fillBiGraph(List<String> contents, BiGraphParseConfig config, BiGraphImpl biGraph);
+    abstract void fillBiGraph(List<String> contents, BiGraphParseConfig config, BiGraph biGraph);
 
     public BiGraph buildFromFile(BiGraphImpl biGraph) throws IOException, ParseException {
         BufferedReader reader = getFileReader();
@@ -47,7 +47,7 @@ public abstract class BiGraphParser {
                 }
                 currentLine++;
             }
-            return fillBiGraph(contents, config, biGraph);
+            fillBiGraph(contents, config, biGraph);
         } catch (ParseException e){
             logger.error("Error at line {} : {}", currentLine, e.getMessage());
             throw e;

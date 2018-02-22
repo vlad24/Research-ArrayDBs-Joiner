@@ -2,6 +2,7 @@ package com.tfpower.arraydbs.beans;
 
 import com.tfpower.arraydbs.beans.impl.BiGraphImpl;
 import com.tfpower.arraydbs.domain.Vertex;
+import com.tfpower.arraydbs.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -11,11 +12,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.ParseException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Created by vlad on 24.01.18.
@@ -37,7 +40,7 @@ public class BiGraphFileIncListParser extends BiGraphParser{
 
 
     @Override
-    BufferedReader getFileReader(String fileName) throws IOException {
+    BufferedReader getFileReader() throws IOException {
         return new BufferedReader(new InputStreamReader(new ClassPathResource(fileName).getInputStream()));
     }
 
@@ -60,27 +63,25 @@ public class BiGraphFileIncListParser extends BiGraphParser{
     }
 
     @Override
-    BiGraph fillBiGraph(List<String> contents, BiGraphParseConfig config, BiGraphImpl biGraph) {
-
-        for (String currentContentLine : contents){
-            String contentLine = currentContentLine.replace(commentPrefix, "");
-            String[] elements = contentLine.split(elementSepRegexp);
-            String nodeDeclaration = elements[0];
-            String[] neighbours = elements[1].split(neighbourSepRegexp);
-            Vertex vertex = parseVertex(nodeDeclaration);
-            biGraph.addFirstClassVertex(vertex);
+    void fillBiGraph(List<String> contents, BiGraphParseConfig config, final BiGraph biGraph) {
+        String firstClassVerticesRaw = contents.get(0);
+        String secondClassVerticesRaw = contents.get(1);
+        Arrays.stream(firstClassVerticesRaw.split(elementSepRegexp)).forEach(p -> biGraph.addFirstClassVertex(parseVertex(p)));
+        Arrays.stream(secondClassVerticesRaw.split(elementSepRegexp)).forEach(p -> biGraph.addSecondClassVertex(parseVertex(p)));
+        List<Pair<Integer, List<Integer>>> neighbours = contents.stream().skip(2).map(this::parseNeighbours).collect(toList());
+        for (Pair<Integer, List<Integer>> neighbourInfo : neighbours){
+            neighbourInfo.getRight().forEach(n -> biGraph.addEdge(neighbourInfo.getLeft(), n));
         }
-        List<Integer> row = contents.stream().map(c - >
-                Arrays.stream(line.replace(commentPrefix, "").split(separatorRe))
-                        .map(Integer::parseInt)
-                        .collect(Collectors.toList())
-        ).;
-        return null;
     }
 
     private Vertex parseVertex(String nodeDeclaration) {
-
+        //TODO
         return null;
+    }
+
+    private Pair<Integer, List<Integer>> parseNeighbours(String line){
+        String parts[] = line.split(neighbourSepRegexp);
+        return new Pair<>(Integer.parseInt(parts[0]), Arrays.stream(parts[1].split(elementSepRegexp)).map(Integer::parseInt).collect(toList()));
     }
 
 

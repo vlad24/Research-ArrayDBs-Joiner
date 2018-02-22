@@ -17,7 +17,7 @@ public interface BiGraph {
 
     void addSecondClassVertex(Vertex vertex);
 
-    void addEdge(Vertex vertexStart);
+    void addEdge(int vertexEndId, int vertexStartId);
 
     Set<Vertex> getLeftVertices();
 
@@ -45,5 +45,9 @@ public interface BiGraph {
 
     default Boolean areConnected(Vertex a, Vertex b){
         return areConnected(a.getId(), b.getId());
+    }
+
+    default void addEdge(Vertex vertexStart, Vertex vertexEnd){
+        addEdge(vertexStart.getId(), vertexEnd.getId());
     }
 }
