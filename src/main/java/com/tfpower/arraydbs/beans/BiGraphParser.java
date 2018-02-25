@@ -3,10 +3,12 @@ package com.tfpower.arraydbs.beans;
 import com.tfpower.arraydbs.beans.impl.BiGraphImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,18 +24,18 @@ public abstract class BiGraphParser {
     public BiGraphParser() {
     }
 
-    abstract BiGraphParseConfig constructConfig(String line) throws ParseException;
+    abstract protected  BiGraphParseConfig constructConfig(String line) throws ParseException;
 
-    abstract BufferedReader getFileReader() throws IOException;
+    abstract protected  String getFileName() throws IOException;
 
-    abstract boolean isConfigLine(String line);
+    abstract protected boolean isConfigLine(String line);
 
-    abstract boolean isCommentLine(String line);
+    abstract protected boolean isCommentLine(String line);
 
-    abstract void fillBiGraph(List<String> contents, BiGraphParseConfig config, BiGraph biGraph);
+    abstract protected  void fillBiGraph(List<String> contents, BiGraphParseConfig config, BiGraph biGraph);
 
-    public BiGraph buildFromFile(BiGraphImpl biGraph) throws IOException, ParseException {
-        BufferedReader reader = getFileReader();
+    public void buildFromFile(BiGraphImpl biGraph) throws IOException, ParseException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new ClassPathResource(getFileName()).getInputStream()));
         String line = null;
         int currentLine = 0;
         List<String> contents = new ArrayList<>();

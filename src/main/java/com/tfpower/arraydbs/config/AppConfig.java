@@ -13,8 +13,8 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 @ComponentScan(basePackages = "com.tfpower.arraydbs.beans")
 @PropertySource("classpath:app.properties")
 public class AppConfig {
-//    @Bean
-//    public static PropertySourcesPlaceholderConfigurer propertyConfigInDev() {
-//        return new PropertySourcesPlaceholderConfigurer();
-//    }
+    @Bean
+    public static PropertySourcesPlaceholderConfigurer propertyConfigInDev() {
+        return new PropertySourcesPlaceholderConfigurer();
+    }
 }
