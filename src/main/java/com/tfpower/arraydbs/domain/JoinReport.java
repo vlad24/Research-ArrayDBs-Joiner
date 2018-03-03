@@ -7,31 +7,31 @@ import java.util.Map;
  * Created by vlad on 24.01.18.
  */
 public class JoinReport {
-    private List<Integer> traverseSequence;
-    private Map<Integer, Integer> loadFrequencies;
+    private List<String> traverseSequence;
+    private Map<String, Integer> loadFrequencies;
     private Integer totalWeight;
 
-    public List<Integer> getTraverseSequence() {
+    public List<String> getTraverseSequence() {
         return traverseSequence;
     }
 
-    public void setTraverseSequence(List<Integer> traverseSequence) {
+    public void setTraverseSequence(List<String> traverseSequence) {
         this.traverseSequence = traverseSequence;
     }
 
-    public Map<Integer, Integer> getLoadFrequencies() {
+    public Map<String, Integer> getLoadFrequencies() {
         return loadFrequencies;
     }
 
-    public void setLoadFrequencies(Map<Integer, Integer> loadFrequencies) {
+    public void setLoadFrequencies(Map<String, Integer> loadFrequencies) {
         this.loadFrequencies = loadFrequencies;
     }
 
-    public Integer getTotalWeight() {
+    public Integer setTotalCost() {
         return totalWeight;
     }
 
-    public void setTotalWeight(Integer totalWeight) {
+    public void setTotalCost(Integer totalWeight) {
         this.totalWeight = totalWeight;
     }
 

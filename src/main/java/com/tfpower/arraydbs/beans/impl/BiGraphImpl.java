@@ -2,6 +2,7 @@ package com.tfpower.arraydbs.beans.impl;
 
 import com.tfpower.arraydbs.beans.BiGraph;
 import com.tfpower.arraydbs.domain.Edge;
+import com.tfpower.arraydbs.domain.TraverseHelper;
 import com.tfpower.arraydbs.domain.Vertex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -10,10 +11,9 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
+import java.util.function.Predicate;
 
-import static com.tfpower.arraydbs.beans.impl.BiGraphImpl.TraversalProgress.Status.DONE;
-import static com.tfpower.arraydbs.beans.impl.BiGraphImpl.TraversalProgress.Status.IN_PROGRESS;
-import static com.tfpower.arraydbs.beans.impl.BiGraphImpl.TraversalProgress.Status.UNTOUCHED;
+import static com.tfpower.arraydbs.domain.TraverseHelper.Status.*;
 import static java.util.stream.Collectors.toSet;
 
 /**
@@ -25,11 +25,11 @@ public class BiGraphImpl implements BiGraph {
     @Autowired
     BiGraphFileIncListParser parser;
 
-    private Set<Integer> leftVertices;
-    private Set<Integer> rightVertices;
+    private Set<String> leftVertices;
+    private Set<String> rightVertices;
     private Set<Edge> edges;
-    private Map<Integer, Vertex> vertexIndex;
-    private Map<Integer, Set<Edge>> incidenceMap;
+    private Map<String, Vertex> vertexIndex;
+    private Map<String, Set<Edge>> incidenceMap;
 
     public BiGraphImpl(){
         vertexIndex = new HashMap<>();
@@ -59,6 +59,7 @@ public class BiGraphImpl implements BiGraph {
 
     @Override
     public void addEdge(Edge edge) {
+        edges.add(edge);
         incidenceMap.putIfAbsent(edge.getStart(), new HashSet<>());
         incidenceMap.putIfAbsent(edge.getEnd(), new HashSet<>());
         incidenceMap.get(edge.getStart()).add(edge);
@@ -87,50 +88,96 @@ public class BiGraphImpl implements BiGraph {
     }
 
     @Override
-    public Set<Vertex> getNeighboursOf(Integer vertexId) {
+    public Set<Vertex> getNeighbours(String vertexId) {
         return incidenceMap.getOrDefault(vertexId, Collections.emptySet()).stream()
                 .map(e -> getVertexByIdOrFail(e.endDifferingFrom(vertexId)))
                 .collect(toSet());
     }
 
     @Override
-    public Optional<Vertex> getVertexById(Integer id) {
+    public Set<Vertex> getNeighboursThat(String vertexId, Predicate<Vertex> vertexPredicate) {
+        return getNeighbours(vertexId).stream().filter(vertexPredicate).collect(toSet());
+    }
+
+    @Override
+    public Set<Vertex> getNeighbours(Set<Vertex> vertices) {
+        HashSet<Vertex> neighbours = new HashSet<>();
+        for (Vertex vertex: vertices){
+            neighbours.addAll(getNeighbours(vertex));
+        }
+        return neighbours;
+    }
+
+    @Override
+    public Optional<Vertex> getVertexById(String id) {
         return Optional.ofNullable(vertexIndex.get(id));
     }
 
     @Override
-    public Optional<Edge> getEdgeBetween(Integer leftId, Integer rightId) {
-        return this.incidenceMap.get(leftId).stream().filter(edge -> edge.isIncidentTo(rightId)).findAny();
+    public Optional<Edge> getEdgeBetween(String firstId, String leftId) {
+        return this.incidenceMap.get(firstId).stream().filter(edge -> edge.isIncidentTo(leftId)).findAny();
     }
 
     @Override
-    public Map<Integer, Set<Edge>> getIncidenceMap() {
+    public Map<String, Set<Edge>> getIncidenceMap() {
         return incidenceMap;
     }
 
     @Override
-    public Optional<Queue<Vertex>> getPathBetween(Integer firstId, Integer secondId) {
-        return searchPathBetween(secondId, firstId, new TraversalProgress());
+    public Optional<Queue<Vertex>> getPathBetween(String firstId, String secondId) {
+        return searchPathBetween(secondId, firstId, new TraverseHelper());
     }
 
-    private Optional<Queue<Vertex>> searchPathBetween(Integer destinationVertexId, Integer current, TraversalProgress traversal) {
+    @Override
+    public Set<String> getAllVertices() {
+        Set<String> allVertices = new HashSet<>(getVertexAmount());
+        allVertices.addAll(leftVertices);
+        allVertices.addAll(rightVertices);
+        return allVertices;
+    }
+
+    @Override
+    public int getVertexAmount() {
+        return rightVertices.size() + leftVertices.size();
+    }
+
+    @Override
+    public int getEdgeAmount() {
+        return edges.size();
+    }
+
+    @Override
+    public Set<Edge> getEdgesBetween(Vertex anchorVertex, Set<Vertex> surroundingVertices) {
+        return surroundingVertices.stream()
+                .map(v -> getEdgeBetween(anchorVertex, v))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(toSet());
+    }
+
+    @Override
+    public int degree(String vertexId) {
+        return 0;
+    }
+
+    private Optional<Queue<Vertex>> searchPathBetween(String destinationVertexId, String current, TraverseHelper traversal) {
         if (current.equals(destinationVertexId)) {
             traversal.finish();
-            return Optional.of(traversal.getPath());
+            return Optional.of(traversal.getVisitHistory());
         } else {
-            traversal.appendToPath(getVertexByIdOrFail(current));
+            traversal.pushToVisitPath(getVertexByIdOrFail(current));
             traversal.markVertex(current, IN_PROGRESS);
-            Set<Vertex> unvisitedNeighbours = getNeighboursOf(current)
+            Set<Vertex> unvisitedNeighbours = getNeighbours(current)
                     .stream().filter(n -> traversal.statusOfVertex(n) == UNTOUCHED).collect(toSet());
             if (unvisitedNeighbours.isEmpty()) {
                 traversal.markVertex(current, DONE);
             } else {
                 Iterator<Vertex> iterator = unvisitedNeighbours.iterator();
                 while (iterator.hasNext() && !traversal.isFinished()) {
-                    Integer neighbourId = iterator.next().getId();
+                    String neighbourId = iterator.next().getId();
                     searchPathBetween(destinationVertexId, neighbourId, traversal);
                     if (!traversal.isFinished()) {
-                        traversal.popFromPath();
+                        traversal.popFromVisitPath();
                     }
                 }
             }
@@ -138,57 +185,13 @@ public class BiGraphImpl implements BiGraph {
         }
     }
 
-    static class TraversalProgress {
-        boolean finished;
-        Deque<Vertex> path;
-        Map<Integer, Status> vertexStatus;
-        Map<Integer, Status> edgeStatus;
-        Integer accumulator;
-
-        public TraversalProgress() {
-            this.finished = false;
-            this.path = new LinkedList<>();
-            this.vertexStatus = new HashMap<>();
-            this.edgeStatus = new HashMap<>();
-            this.accumulator = 0;
-        }
-
-        public void appendToPath(Vertex vertex) {
-            path.addLast(vertex);
-        }
-
-        public void popFromPath(){
-            path.removeLast();
-        }
-
-        public void markVertex(Integer vertexId, Status progress) {
-            vertexStatus.put(vertexId, progress);
-        }
-
-        public void markEdge(Integer edgeId, Status progress) {
-            vertexStatus.put(edgeId, progress);
-        }
-
-        public Status statusOfVertex(Vertex v) {
-            return vertexStatus.getOrDefault(v, UNTOUCHED);
-        }
-
-        public Deque<Vertex> getPath() {
-            return path;
-        }
-
-        public boolean isFinished() {
-            return finished;
-        }
-
-        public void finish(){
-            finished = true;
-        }
-
-        enum Status {
-            UNTOUCHED,
-            IN_PROGRESS,
-            DONE
-        }
+    @Override
+    public String toString() {
+        return "BiGraphImpl{" + "\n" +
+                "   leftVertices=" + leftVertices + ",\n," +
+                "   rightVertices=" + rightVertices + ",\n" +
+                "   edges=" + edges + "\n" +
+                '}';
     }
+
 }

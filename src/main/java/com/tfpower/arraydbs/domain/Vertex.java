@@ -6,34 +6,34 @@ import static com.tfpower.arraydbs.util.Constants.ABSENT;
  * Created by vlad on 21.02.18.
  */
 public class Vertex {
-    private Integer id;
+    private String id;
     private String name;
     private Integer weight;
 
-    public Vertex(Integer id) {
+    public Vertex(String id) {
         this.id = id;
         this.name = "";
         this.weight = ABSENT;
     }
 
-    public Vertex(Integer id, Integer weight) {
+    public Vertex(String id, Integer weight) {
         this.id = id;
         this.name = "";
         this.weight = weight;
     }
 
-    public Vertex(Integer id, String name, Integer weight) {
+    public Vertex(String id, String name, Integer weight) {
         this.id = id;
         this.name = name;
         this.weight = weight;
     }
 
-    public Integer getId() {
+    public String getId() {
         return id;
     }
 
 
-    public void setId(Integer id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -55,6 +55,6 @@ public class Vertex {
 
     @Override
     public String toString() {
-        return "V[" + id +"]_" + weight + (name != null && name.isEmpty() ? "//" + name : "");
+        return "#" + id +"#_" + weight + (name != null && !name.isEmpty() ? "//" + name : "");
     }
 }

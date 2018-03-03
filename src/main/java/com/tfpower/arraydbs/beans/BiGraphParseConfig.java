@@ -1,10 +1,13 @@
 package com.tfpower.arraydbs.beans;
 
+import org.springframework.stereotype.Component;
+
 import java.util.Map;
 
 /**
  * Created by vlad on 21.02.18.
  */
+@Component
 public class BiGraphParseConfig {
     private String firstClassPrefix;
     private String secondClassPrefix;

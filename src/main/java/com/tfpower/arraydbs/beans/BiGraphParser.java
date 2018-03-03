@@ -30,7 +30,7 @@ public abstract class BiGraphParser {
 
     abstract protected boolean isConfigLine(String line);
 
-    abstract protected boolean isCommentLine(String line);
+    abstract protected boolean isLineToIgnore(String line);
 
     abstract protected  void fillBiGraph(List<String> contents, BiGraphParseConfig config, BiGraph biGraph);
 
@@ -44,7 +44,7 @@ public abstract class BiGraphParser {
             while ((line = reader.readLine()) != null) {
                 if (isConfigLine(line)) {
                     config = constructConfig(line);
-                } else if (!isCommentLine(line)) {
+                } else if (!isLineToIgnore(line)) {
                     contents.add(line);
                 }
                 currentLine++;

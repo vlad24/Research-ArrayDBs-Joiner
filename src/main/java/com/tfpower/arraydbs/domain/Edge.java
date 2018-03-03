@@ -1,25 +1,35 @@
 package com.tfpower.arraydbs.domain;
 
+import com.tfpower.arraydbs.util.Pair;
+
 /**
  * Created by vlad on 21.02.18.
  */
 public class Edge {
 
-    private Integer start;
-    private Integer end;
+    private String start;
+    private String end;
     private Integer weight;
+    private String id;
 
-    public Edge(Integer start, Integer end, Integer weight) {
+    public Edge(String id, String start, String end, Integer weight) {
+        this.id = id;
         this.start = start;
         this.end = end;
         this.weight = weight;
     }
 
-    public Integer getStart() {
+    public Edge(String start, String end, Integer weight) {
+        this.start = start;
+        this.end = end;
+        this.weight = weight;
+    }
+
+    public String getStart() {
         return start;
     }
 
-    public Integer getEnd() {
+    public String getEnd() {
         return end;
     }
 
@@ -27,23 +37,31 @@ public class Edge {
         return weight;
     }
 
-    public void setStart(Integer start) {
-        this.start = start;
-    }
-
-    public void setEnd(Integer end) {
-        this.end = end;
-    }
-
     public void setWeight(Integer weight) {
         this.weight = weight;
     }
 
-    public boolean isIncidentTo(Integer id) {
+    public boolean isIncidentTo(String id) {
         return start.equals(id) || end.equals(id);
     }
 
-    public Integer endDifferingFrom(Integer id) {
+    public String endDifferingFrom(String id) {
         return start.equals(id) ? end : start;
+    }
+
+    @Override
+    public String toString() {
+        return "." + start + "--" + weight +"-->" + end + ".";
+    }
+
+    public String getId() {
+        if (id == null){
+            id = computeId();
+        }
+        return id;
+    }
+
+    private String computeId() {
+        return String.valueOf(start) + "-->" + String.valueOf(end);
     }
 }

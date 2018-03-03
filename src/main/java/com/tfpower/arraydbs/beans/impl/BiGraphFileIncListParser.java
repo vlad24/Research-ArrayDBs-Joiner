@@ -27,7 +27,7 @@ import static java.util.stream.Collectors.toList;
 @Component
 public class BiGraphFileIncListParser extends BiGraphParser {
 
-    @Value("${incListsGraphFileName}")
+    @Value("${inc_lists_graph_file_name}")
     private String fileName;
 
     private  static  final Logger logger = LoggerFactory.getLogger(BiGraphFileIncListParser.class);
@@ -55,8 +55,8 @@ public class BiGraphFileIncListParser extends BiGraphParser {
     }
 
     @Override
-    protected boolean isCommentLine(String line) {
-        return line.startsWith(COMMENT_PREFIX);
+    protected boolean isLineToIgnore(String line) {
+        return line == null || line.trim().isEmpty() || line.startsWith(COMMENT_PREFIX);
     }
 
     @Override
@@ -69,11 +69,11 @@ public class BiGraphFileIncListParser extends BiGraphParser {
 
     @Override
     protected void fillBiGraph(List<String> contents, BiGraphParseConfig config, final BiGraph biGraph) {
-        String firstClassVerticesRaw = contents.get(0);
-        String secondClassVerticesRaw = contents.get(1);
+        String firstClassVerticesRaw = contents.get(0).trim();
+        String secondClassVerticesRaw = contents.get(1).trim();
         Arrays.stream(firstClassVerticesRaw.split(ELEMENT_SEP_REGEXP)).forEach(p -> biGraph.addFirstClassVertex(parseVertex(p)));
         Arrays.stream(secondClassVerticesRaw.split(ELEMENT_SEP_REGEXP)).forEach(p -> biGraph.addSecondClassVertex(parseVertex(p)));
-        List<Pair<Integer, List<Integer>>> links = contents.stream().skip(2).map(this::parseLinks).collect(toList());
+        List<Pair<String, List<String>>> links = contents.stream().skip(2).map(this::parseLinks).collect(toList());
         links.forEach(link ->
                 link.getRight().forEach(element ->
                         biGraph.addEdge(new Edge(link.getLeft(), element,
@@ -85,16 +85,16 @@ public class BiGraphFileIncListParser extends BiGraphParser {
 
     private Vertex parseVertex(String vertexDeclaration) {
         List<String> vertexDataParts = getTrimmedParts(vertexDeclaration, WEIGHT_SEP_REGEXP);
-        return new Vertex(Integer.parseInt(vertexDataParts.get(0)), Integer.parseInt(vertexDataParts.get(1)));
+        return new Vertex(vertexDataParts.get(0), Integer.parseInt(vertexDataParts.get(1)));
     }
 
     private List<String> getTrimmedParts(String vertexDeclaration, String separator) {
         return Arrays.stream(vertexDeclaration.trim().split(separator)).map(String::trim).collect(toList());
     }
 
-    private Pair<Integer, List<Integer>> parseLinks(String line){
+    private Pair<String, List<String>> parseLinks(String line){
         List<String> parts = getTrimmedParts(line, NEIGHBOUR_SEP_REGEXP);
-        return new Pair<>(Integer.parseInt(parts.get(0)), Arrays.stream(parts.get(1).split(ELEMENT_SEP_REGEXP)).map(Integer::parseInt).collect(toList()));
+        return new Pair<>(parts.get(0), Arrays.asList(parts.get(1).split(ELEMENT_SEP_REGEXP)));
     }
 
 

@@ -4,9 +4,7 @@ import com.tfpower.arraydbs.domain.Edge;
 import com.tfpower.arraydbs.domain.Vertex;
 
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.Predicate;
 
 /**
  * Created by vlad on 21.02.18.
@@ -25,16 +23,34 @@ public interface BiGraph {
 
     Set<Edge> getEdges();
 
-    Set<Vertex> getNeighboursOf(Integer vertex);
+    Set<Vertex> getNeighbours(String vertex);
 
-    Optional<Vertex> getVertexById(Integer id);
+    Set<Vertex> getNeighboursThat(String vertexId, Predicate<Vertex> vertexPredicate);
 
-    Optional<Edge> getEdgeBetween(Integer leftId, Integer rightId);
+    Set<Vertex> getNeighbours(Set<Vertex> vertices);
 
-    Map<Integer, Set<Edge>> getIncidenceMap();
+    Optional<Vertex> getVertexById(String id);
 
-    Optional<Queue<Vertex>> getPathBetween(Integer firstId, Integer secondId);
+    Optional<Edge> getEdgeBetween(String firstId, String leftId);
 
+    Map<String, Set<Edge>> getIncidenceMap();
+
+    Optional<Queue<Vertex>> getPathBetween(String firstId, String secondId);
+
+    Set<String> getAllVertices();
+
+    int getVertexAmount();
+
+    int getEdgeAmount();
+
+    Set<Edge> getEdgesBetween(Vertex nextVertex, Set<Vertex> allEntries);
+
+    int degree(String vertexId);
+
+    default Edge getEdgeBetweenOrFail(Vertex first, Vertex second){
+        return getEdgeBetween(first.getId(), second.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Edge between " + first + " and " + second + " not found"));
+    }
 
     default Optional<Queue<Vertex>> getPathBetween(Vertex first, Vertex second){
         return getPathBetween(first.getId(), second.getId());
@@ -44,7 +60,7 @@ public interface BiGraph {
         return getEdgeBetween(first.getId(), second.getId());
     }
 
-    default Boolean areConnected(Integer leftId, Integer rightId){
+    default Boolean areConnected(String leftId, String rightId){
         return getPathBetween(leftId, rightId).isPresent();
     }
 
@@ -52,13 +68,20 @@ public interface BiGraph {
         return areConnected(a.getId(), b.getId());
     }
 
-    default Vertex getVertexByIdOrFail(Integer id){
+    default Vertex getVertexByIdOrFail(String id){
         return getVertexById(id).orElseThrow(() -> new IllegalArgumentException("No vertex with id " + id + " found"));
     }
 
-    default Set<Vertex> getNeighboursOf(Vertex vertex){
-        return getNeighboursOf(vertex.getId());
+    default Set<Vertex> getNeighbours(Vertex vertex){
+        return getNeighbours(vertex.getId());
     }
 
+    default Set<Vertex> getNeighboursThat(Vertex vertex, Predicate<Vertex> vertexPredicate){
+        return getNeighboursThat(vertex.getId(), vertexPredicate);
+    }
+
+    default int degree(Vertex vertex){
+        return degree(vertex.getId());
+    }
 
 }
