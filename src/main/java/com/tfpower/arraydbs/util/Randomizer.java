@@ -2,7 +2,6 @@ package com.tfpower.arraydbs.util;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Random;
 
 public class Randomizer {
@@ -18,4 +17,7 @@ public class Randomizer {
         return iterator.next();
     }
 
+    public static Integer randomIntBetween(int start, int end) {
+        return random.nextInt(end - start + 1) + start;
+    }
 }

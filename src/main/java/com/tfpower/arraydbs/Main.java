@@ -14,13 +14,14 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
  */
 public class Main {
 
-    private static Logger logger = LoggerFactory.getLogger(Main.class);
+    private final static Logger logger = LoggerFactory.getLogger(Main.class);
     public static void main(String[] args) {
         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
         ArrayJoiner arrayJoiner = context.getBean(ArrayJoiner.class);
         BiGraph bGraph = context.getBean(BiGraph.class);
         JoinReport joinReport = arrayJoiner.join(bGraph);
-        logger.debug("Over:" + joinReport);
+        logger.debug("Join process is over: {}",  joinReport);
+        logger.info("Explaining: {}", joinReport.getLoadFrequencies().values().stream().mapToInt(Integer::intValue).summaryStatistics());
     }
 
 }

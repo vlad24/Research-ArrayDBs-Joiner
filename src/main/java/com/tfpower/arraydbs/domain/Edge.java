@@ -2,6 +2,8 @@ package com.tfpower.arraydbs.domain;
 
 import com.tfpower.arraydbs.util.Pair;
 
+import java.util.Objects;
+
 /**
  * Created by vlad on 21.02.18.
  */
@@ -51,7 +53,7 @@ public class Edge {
 
     @Override
     public String toString() {
-        return "." + start + "--" + weight +"-->" + end + ".";
+        return start + "<--" + weight +"-->" + end + ".";
     }
 
     public String getId() {
@@ -62,6 +64,21 @@ public class Edge {
     }
 
     private String computeId() {
-        return String.valueOf(start) + "-->" + String.valueOf(end);
+        return String.valueOf(start) + "<-->" + String.valueOf(end);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Edge edge = (Edge) o;
+        return Objects.equals(start, edge.start) &&
+                Objects.equals(end, edge.end) &&
+                Objects.equals(weight, edge.weight);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(start, end, weight);
     }
 }

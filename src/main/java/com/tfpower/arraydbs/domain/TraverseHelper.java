@@ -78,6 +78,10 @@ public class TraverseHelper {
         return vertexStatus.getOrDefault(v.getId(), Status.UNTOUCHED);
     }
 
+    public Status statusOfEdge(Edge edge) {
+        return vertexStatus.getOrDefault(edge.getId(), Status.UNTOUCHED);
+    }
+
     public Deque<Vertex> getVisitHistory() {
         return visitHistory;
     }

@@ -3,6 +3,7 @@ package com.tfpower.arraydbs.beans.impl;
 import com.tfpower.arraydbs.beans.ArrayJoiner;
 import com.tfpower.arraydbs.beans.BiGraph;
 import com.tfpower.arraydbs.beans.Cache;
+import com.tfpower.arraydbs.domain.Edge;
 import com.tfpower.arraydbs.domain.JoinReport;
 import com.tfpower.arraydbs.domain.TraverseHelper;
 import com.tfpower.arraydbs.domain.Vertex;
@@ -13,11 +14,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
 import java.util.Set;
+import java.util.function.ToIntFunction;
 
 import static com.tfpower.arraydbs.domain.TraverseHelper.Status.DONE;
 import static com.tfpower.arraydbs.domain.TraverseHelper.Status.UNTOUCHED;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 
 /**
  * Created by vlad on 24.01.18.
@@ -31,29 +32,46 @@ public class ArrayJoinerWithCacheImpl implements ArrayJoiner {
     Cache<Vertex> cache;
 
     public JoinReport join(BiGraph bGraph) {
-        final Set<String> allVertices = bGraph.getAllVertices();
-        final int allCapacity = allVertices.size();
+        final Set<String> allVertices = bGraph.getAllVerticesIds();
         final JoinReport joinReport = new JoinReport();
         final TraverseHelper traverseHelper = new TraverseHelper();
         traverseHelper.markVertices(allVertices, UNTOUCHED);
         traverseHelper.setAccumulatorUpdater((acc, vertex) -> acc + vertex.getWeight());
-        Vertex currentVertex = pickFirstVertex(allVertices.stream().map(bGraph::getVertexByIdOrFail).collect(toSet()));
+        Vertex currentVertex = pickFirstVertex(bGraph);
+        int iterationNumber = 0;
+        int processedEdges = 0;
+        int edgesAmount = bGraph.getEdgeAmount();
         do {
-            logger.debug("Currently at {}. Cache: {}", currentVertex, cache);
+            iterationNumber++;
+            logger.trace("Iteration: {}", iterationNumber);
+            logger.debug("Processing: {}", currentVertex);
             traverseHelper.markVertex(currentVertex, DONE);
             traverseHelper.accountVisit(currentVertex);
             traverseHelper.pushToVisitPath(currentVertex);
             traverseHelper.updateAccumulatorBy(currentVertex);
-            Vertex evicted = cache.tryAdd(currentVertex,
-                    Comparator.comparing(v -> degreeExcludingDone(bGraph, traverseHelper, v)));
-            logger.debug("Evicted: {}", evicted);
-            Vertex nextVertex = pickNext(currentVertex, bGraph, traverseHelper);
-            bGraph.getEdgesBetween(nextVertex, cache.getAllEntries()).forEach(e -> traverseHelper.markEdge(e, DONE));
-            logger.debug("Moved to {}", currentVertex);
+            cache.add(currentVertex);
+            logger.debug("Cache has been updated by {}. Current: {}", currentVertex, cache);
+            Set<Edge> edgesInCache = bGraph.getEdgesBetween(currentVertex, cache.getAllEntries());
+            logger.debug("Processing edges that cache allows: {}", edgesInCache);
+            edgesInCache.forEach(e -> traverseHelper.markEdge(e, DONE));
             logger.debug("Edge status: {}", traverseHelper.getEdgeStatus());
             logger.debug("Vertex status: {}", traverseHelper.getVertexStatus());
+            logger.debug("Visit history: {}", traverseHelper.getVisitHistory());
+            Vertex nextVertex = pickNext(currentVertex, bGraph, traverseHelper);
+            logger.debug("Vertex {} will be visited next...", nextVertex);
+            if (cache.getAllEntries().size() == cache.getCapacity()) {
+                Vertex evicted = cache.evict(
+                        Comparator.comparing((Vertex v) -> bGraph.getEdgeBetween(v.getId(), nextVertex.getId()).isPresent() ? 0 : 1)
+                                .thenComparing(vertex -> -degreeExcludingDone(bGraph, traverseHelper, vertex))
+                );
+                logger.debug("Evicted {} to free up space for next vertex...", evicted);
+            }
+            currentVertex = nextVertex;
+            processedEdges = traverseHelper.countEdgesMarked(DONE);
+            logger.debug("Edges left to process: {}", edgesAmount - processedEdges);
+            logger.debug("\n");
         }
-        while (traverseHelper.countVerticesMarked(DONE) != allCapacity);
+        while (processedEdges != edgesAmount);
         joinReport.setLoadFrequencies(traverseHelper.getVisitCountsPerVertices());
         joinReport.setTotalCost(traverseHelper.getAccumulator());
         joinReport.setTraverseSequence(traverseHelper.getVisitHistory().stream().map(Vertex::getId).collect(toList()));
@@ -61,25 +79,31 @@ public class ArrayJoinerWithCacheImpl implements ArrayJoiner {
     }
 
 
-    private Vertex pickFirstVertex(Set<Vertex> vertices) {
-        return vertices.stream().filter(v -> v.getId().equals("B4")).findFirst().get();
+    private Vertex pickFirstVertex(BiGraph biGraph) {
 //        return Randomizer.pickRandomFrom(vertices);
+        return biGraph.getAllVerticesIds().stream()
+                .map(biGraph::getVertexByIdOrFail)
+                .min(Comparator.comparingInt((ToIntFunction<Vertex>) biGraph::degree)
+                        .thenComparing(Vertex::getWeight))
+                .orElseThrow(() -> new IllegalStateException("No min degree vertex found"));
     }
 
     private Vertex pickNext(Vertex current, BiGraph bGraph, TraverseHelper traverseManager) {
         Set<Vertex> anchorVertices = cache.getAllEntries();
         assert anchorVertices.contains(current);
-        Vertex vertex = bGraph.getNeighbours(anchorVertices).stream()
-                .min(Comparator.comparing(traverseManager::statusOfVertex)
-                        .thenComparing(neighbour -> degreeExcludingDone(bGraph, traverseManager, neighbour))
-                        .thenComparing(neighbour -> -neighbour.getWeight())
+        return bGraph.getSurroundingsOf(anchorVertices).stream()
+                .min(Comparator.comparing(traverseManager::statusOfVertex) // first pick untouched ones
+                        .thenComparing(neighbour -> degreeExcludingDone(bGraph, traverseManager, neighbour)) // then min by done-degree
+                        .thenComparing(neighbour -> -neighbour.getWeight()) // then the most light one
                 ).orElse(null);
-        return vertex;
     }
 
-    private Integer degreeExcludingDone(BiGraph bGraph, TraverseHelper traverseManager, Vertex neighbour) {
-        return bGraph.degree(neighbour) -
-                bGraph.getNeighboursThat(neighbour, nn -> traverseManager.statusOfVertex(nn) == DONE).size();
+    private Integer degreeExcludingDone(BiGraph bGraph, TraverseHelper traverseHelper, Vertex vertex) {
+        Set<Vertex> neighborsByDoneEdges = bGraph.getNeighboursThat(
+                nbr -> traverseHelper.statusOfEdge(bGraph.getEdgeBetweenOrFail(nbr, vertex)) == DONE,
+                vertex
+        );
+        return bGraph.degree(vertex) - neighborsByDoneEdges.size();
     }
 
 }

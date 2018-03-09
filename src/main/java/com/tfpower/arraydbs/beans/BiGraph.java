@@ -27,7 +27,7 @@ public interface BiGraph {
 
     Set<Vertex> getNeighboursThat(String vertexId, Predicate<Vertex> vertexPredicate);
 
-    Set<Vertex> getNeighbours(Set<Vertex> vertices);
+    Set<Vertex> getSurroundingsOf(Set<Vertex> vertices);
 
     Optional<Vertex> getVertexById(String id);
 
@@ -37,7 +37,7 @@ public interface BiGraph {
 
     Optional<Queue<Vertex>> getPathBetween(String firstId, String secondId);
 
-    Set<String> getAllVertices();
+    Set<String> getAllVerticesIds();
 
     int getVertexAmount();
 
@@ -76,7 +76,7 @@ public interface BiGraph {
         return getNeighbours(vertex.getId());
     }
 
-    default Set<Vertex> getNeighboursThat(Vertex vertex, Predicate<Vertex> vertexPredicate){
+    default Set<Vertex> getNeighboursThat(Predicate<Vertex> vertexPredicate, Vertex vertex){
         return getNeighboursThat(vertex.getId(), vertexPredicate);
     }
 

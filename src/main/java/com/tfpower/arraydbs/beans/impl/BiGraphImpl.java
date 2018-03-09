@@ -100,12 +100,13 @@ public class BiGraphImpl implements BiGraph {
     }
 
     @Override
-    public Set<Vertex> getNeighbours(Set<Vertex> vertices) {
-        HashSet<Vertex> neighbours = new HashSet<>();
+    public Set<Vertex> getSurroundingsOf(Set<Vertex> vertices) {
+        HashSet<Vertex> surroundings = new HashSet<>();
         for (Vertex vertex: vertices){
-            neighbours.addAll(getNeighbours(vertex));
+            surroundings.addAll(getNeighbours(vertex));
         }
-        return neighbours;
+        surroundings.removeAll(vertices);
+        return surroundings;
     }
 
     @Override
@@ -114,8 +115,10 @@ public class BiGraphImpl implements BiGraph {
     }
 
     @Override
-    public Optional<Edge> getEdgeBetween(String firstId, String leftId) {
-        return this.incidenceMap.get(firstId).stream().filter(edge -> edge.isIncidentTo(leftId)).findAny();
+    public Optional<Edge> getEdgeBetween(String firstId, String secondId) {
+        return firstId.equals(secondId) ?
+                Optional.empty() :
+                incidenceMap.get(firstId).stream().filter(edge -> edge.isIncidentTo(secondId)).findAny();
     }
 
     @Override
@@ -129,7 +132,7 @@ public class BiGraphImpl implements BiGraph {
     }
 
     @Override
-    public Set<String> getAllVertices() {
+    public Set<String> getAllVerticesIds() {
         Set<String> allVertices = new HashSet<>(getVertexAmount());
         allVertices.addAll(leftVertices);
         allVertices.addAll(rightVertices);
@@ -148,16 +151,20 @@ public class BiGraphImpl implements BiGraph {
 
     @Override
     public Set<Edge> getEdgesBetween(Vertex anchorVertex, Set<Vertex> surroundingVertices) {
-        return surroundingVertices.stream()
-                .map(v -> getEdgeBetween(anchorVertex, v))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(toSet());
+        Set<Edge> set = new HashSet<>();
+        for (Vertex v : surroundingVertices) {
+            Optional<Edge> edgeBetween = getEdgeBetween(anchorVertex, v);
+            if (edgeBetween.isPresent()) {
+                Edge edge = edgeBetween.get();
+                set.add(edge);
+            }
+        }
+        return set;
     }
 
     @Override
     public int degree(String vertexId) {
-        return 0;
+        return incidenceMap.getOrDefault(vertexId, Collections.emptySet()).size();
     }
 
     private Optional<Queue<Vertex>> searchPathBetween(String destinationVertexId, String current, TraverseHelper traversal) {

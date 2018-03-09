@@ -37,10 +37,10 @@ public class JoinReport {
 
     @Override
     public String toString() {
-        return "JoinReport{\n" +
-                    "traverseSequence=" + traverseSequence + ",\n" +
-                    "loadFrequencies=" + loadFrequencies + ",\n" +
-                    "totalWeight=" + totalWeight + "\n" +
+        return "JoinReport{\n\t" +
+                    "'traverseSequence':" + traverseSequence + ",\n\t" +
+                    "'loadFrequencies':" + loadFrequencies + ",\n\t" +
+                    "'totalWeight':" + totalWeight + "\n" +
                 '}';
     }
 }

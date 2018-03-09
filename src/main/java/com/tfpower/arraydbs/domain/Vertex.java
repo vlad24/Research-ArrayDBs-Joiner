@@ -1,5 +1,7 @@
 package com.tfpower.arraydbs.domain;
 
+import java.util.Objects;
+
 import static com.tfpower.arraydbs.util.Constants.ABSENT;
 
 /**
@@ -55,6 +57,21 @@ public class Vertex {
 
     @Override
     public String toString() {
-        return "#" + id +"#_" + weight + (name != null && !name.isEmpty() ? "//" + name : "");
+        return "#" + id +"_" + weight + (name != null && !name.isEmpty() ? "//" + name : "");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Vertex vertex = (Vertex) o;
+        return Objects.equals(id, vertex.id) &&
+                Objects.equals(name, vertex.name) &&
+                Objects.equals(weight, vertex.weight);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, weight);
     }
 }
