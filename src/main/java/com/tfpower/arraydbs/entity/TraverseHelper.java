@@ -1,5 +1,6 @@
-package com.tfpower.arraydbs.domain;
+package com.tfpower.arraydbs.entity;
 
+import com.sun.corba.se.impl.orbutil.graph.Graph;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -18,7 +19,8 @@ public class TraverseHelper {
     }
 
     private boolean finished;
-    private Deque<Vertex> visitHistory;
+    private Deque<Vertex> visitResult;
+    private Deque<Vertex> visitBuffer;
     private Map<String, Status> vertexStatus;
     private Map<String, Status> edgeStatus;
     private Map<Status, Set<String>> statusesInfo;
@@ -28,7 +30,8 @@ public class TraverseHelper {
 
     public TraverseHelper() {
         this.finished = false;
-        this.visitHistory = new LinkedList<>();
+        this.visitResult = new LinkedList<>();
+        this.visitBuffer = new LinkedList<>();
         this.vertexVisitCount = new HashMap<>();
         this.vertexStatus = new HashMap<>();
         this.edgeStatus = new HashMap<>();
@@ -37,16 +40,25 @@ public class TraverseHelper {
         accumulatorUpdater = (acc, v) -> acc;
     }
 
-    public void pushToVisitPath(Vertex vertex) {
-        visitHistory.addLast(vertex);
+
+    public void pushToVisitBuffer(Vertex vertex) {
+        visitBuffer.addLast(vertex);
+    }
+
+    public Vertex popFromVisitBuffer() {
+        return visitBuffer.removeLast();
+    }
+
+    public void pushToVisitResult(Vertex vertex) {
+        visitResult.addLast(vertex);
+    }
+
+    public Vertex popFromVisitResult() {
+        return visitResult.removeLast();
     }
 
     public void accountVisit(Vertex vertex) {
         vertexVisitCount.merge(vertex.getId(), 1, Integer::sum);
-    }
-
-    public void popFromVisitPath() {
-        visitHistory.removeLast();
     }
 
     public void markVertex(Vertex vertex, Status status) {
@@ -82,16 +94,24 @@ public class TraverseHelper {
         return vertexStatus.getOrDefault(edge.getId(), Status.UNTOUCHED);
     }
 
-    public Deque<Vertex> getVisitHistory() {
-        return visitHistory;
+    public Deque<Vertex> getVisitResult() {
+        return visitResult;
     }
 
-    public boolean isFinished() {
-        return finished;
+    public Deque<Vertex> getVisitBuffer() {
+        return visitBuffer;
+    }
+
+    public boolean isNotFinished() {
+        return !finished;
     }
 
     public void finish() {
         finished = true;
+    }
+
+    public void finishIf(boolean condition) {
+        finished = condition;
     }
 
     public int countEdgesMarked(Status status) {
@@ -139,7 +159,7 @@ public class TraverseHelper {
                 "  edgeStatus=" + edgeStatus + "\n" +
                 "  statusesInfo=" + statusesInfo + "\n" +
                 "  accumulatorUpdater=" + accumulatorUpdater + "\n" +
-                "  visitHistory=" + visitHistory + "\n" +
+                "  visitResult=" + visitResult + "\n" +
                 '}';
     }
 

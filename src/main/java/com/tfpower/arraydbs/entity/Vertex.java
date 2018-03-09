@@ -1,4 +1,4 @@
-package com.tfpower.arraydbs.domain;
+package com.tfpower.arraydbs.entity;
 
 import java.util.Objects;
 
@@ -73,5 +73,9 @@ public class Vertex {
     @Override
     public int hashCode() {
         return Objects.hash(id, name, weight);
+    }
+
+    public Vertex copy() {
+        return new Vertex(this.id, this.name, this.weight);
     }
 }

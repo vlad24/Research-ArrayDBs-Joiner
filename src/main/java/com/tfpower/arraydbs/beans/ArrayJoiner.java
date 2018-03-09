@@ -1,7 +1,7 @@
 package com.tfpower.arraydbs.beans;
 
-import com.tfpower.arraydbs.domain.JoinReport;
-import org.springframework.stereotype.Component;
+import com.tfpower.arraydbs.entity.BiGraph;
+import com.tfpower.arraydbs.entity.JoinReport;
 
 /**
  * Created by vlad on 24.01.18.

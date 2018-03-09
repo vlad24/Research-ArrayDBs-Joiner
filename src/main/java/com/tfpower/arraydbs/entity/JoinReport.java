@@ -1,7 +1,10 @@
-package com.tfpower.arraydbs.domain;
+package com.tfpower.arraydbs.entity;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /**
  * Created by vlad on 24.01.18.
@@ -42,5 +45,17 @@ public class JoinReport {
                     "'loadFrequencies':" + loadFrequencies + ",\n\t" +
                     "'totalWeight':" + totalWeight + "\n" +
                 '}';
+    }
+
+
+    public static JoinReport fromTraversal(TraverseHelper traverseHelper){
+        JoinReport joinReport = new JoinReport();
+        joinReport.setTotalCost(traverseHelper.getAccumulator());
+        joinReport.setLoadFrequencies(new TreeMap<>(traverseHelper.getVisitCountsPerVertices()));
+        joinReport.setTraverseSequence(traverseHelper.getVisitResult().stream()
+                .map(Vertex::getId)
+                .collect(Collectors.toList())
+        );
+        return joinReport;
     }
 }

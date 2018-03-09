@@ -1,64 +1,34 @@
-package com.tfpower.arraydbs.beans.impl;
+package com.tfpower.arraydbs.entity;
 
-import com.tfpower.arraydbs.beans.BiGraph;
-import com.tfpower.arraydbs.domain.Edge;
-import com.tfpower.arraydbs.domain.TraverseHelper;
-import com.tfpower.arraydbs.domain.Vertex;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.text.ParseException;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static com.tfpower.arraydbs.domain.TraverseHelper.Status.*;
+import static com.tfpower.arraydbs.entity.TraverseHelper.Status.*;
 import static java.util.stream.Collectors.toSet;
 
-/**
- * Created by vlad on 21.02.18.
- */
-@Component
-public class BiGraphImpl implements BiGraph {
+public class GenericGraph {
 
-    @Autowired
-    BiGraphFileIncListParser parser;
+    protected Set<Vertex> vertices;
+    protected Set<Edge> edges;
+    protected Map<String, Vertex> vertexIndex;
+    protected Map<String, Set<Edge>> incidenceMap;
 
-    private Set<String> leftVertices;
-    private Set<String> rightVertices;
-    private Set<Edge> edges;
-    private Map<String, Vertex> vertexIndex;
-    private Map<String, Set<Edge>> incidenceMap;
-
-    public BiGraphImpl(){
+    public GenericGraph() {
+        vertices = new HashSet<>();
         vertexIndex = new HashMap<>();
         incidenceMap = new HashMap<>();
-        rightVertices = new HashSet<>();
-        leftVertices = new HashSet<>();
         edges = new HashSet<>();
         vertexIndex = new HashMap<>();
     }
 
-    @PostConstruct
-    private void initGraphFromFile() throws IOException, ParseException {
-        parser.buildFromFile(this);
+    public void addVertex(Vertex vertex){
+        vertices.add(vertex);
     }
 
-    @Override
-    public void addFirstClassVertex(Vertex vertex) {
-        leftVertices.add(vertex.getId());
-        vertexIndex.put(vertex.getId(), vertex);
-    }
-
-    @Override
-    public void addSecondClassVertex(Vertex vertex) {
-        rightVertices.add(vertex.getId());
-        vertexIndex.put(vertex.getId(), vertex);
-    }
-
-    @Override
     public void addEdge(Edge edge) {
+        if (!isAllowed(edge)){
+            throw new IllegalArgumentException("Unknown vertices being connected");
+        }
         edges.add(edge);
         incidenceMap.putIfAbsent(edge.getStart(), new HashSet<>());
         incidenceMap.putIfAbsent(edge.getEnd(), new HashSet<>());
@@ -66,40 +36,26 @@ public class BiGraphImpl implements BiGraph {
         incidenceMap.get(edge.getEnd()).add(edge);
     }
 
-    @Override
-    public Set<Vertex> getLeftVertices() {
-        return vertexIndex.entrySet().stream()
-                .filter(e -> leftVertices.contains(e.getKey()))
-                .map(Map.Entry::getValue)
-                .collect(toSet());
+    protected boolean isAllowed(Edge edge) {
+        boolean startKnown = vertices.stream().anyMatch(vertex -> vertex.getId().equals(edge.getStart()));
+        boolean endKnown = vertices.stream().anyMatch(vertex -> vertex.getId().equals(edge.getEnd()));
+        return startKnown && endKnown;
     }
 
-    @Override
-    public Set<Vertex> getRightVertices() {
-        return vertexIndex.entrySet().stream()
-                .filter(e -> rightVertices.contains(e.getKey()))
-                .map(Map.Entry::getValue)
-                .collect(toSet());
-    }
-
-    @Override
     public Set<Edge> getEdges() {
         return edges;
     }
 
-    @Override
     public Set<Vertex> getNeighbours(String vertexId) {
         return incidenceMap.getOrDefault(vertexId, Collections.emptySet()).stream()
                 .map(e -> getVertexByIdOrFail(e.endDifferingFrom(vertexId)))
                 .collect(toSet());
     }
 
-    @Override
-    public Set<Vertex> getNeighboursThat(String vertexId, Predicate<Vertex> vertexPredicate) {
+    public Set<Vertex> getNeighboursThat(Predicate<Vertex> vertexPredicate, String vertexId) {
         return getNeighbours(vertexId).stream().filter(vertexPredicate).collect(toSet());
     }
 
-    @Override
     public Set<Vertex> getSurroundingsOf(Set<Vertex> vertices) {
         HashSet<Vertex> surroundings = new HashSet<>();
         for (Vertex vertex: vertices){
@@ -109,47 +65,40 @@ public class BiGraphImpl implements BiGraph {
         return surroundings;
     }
 
-    @Override
     public Optional<Vertex> getVertexById(String id) {
         return Optional.ofNullable(vertexIndex.get(id));
     }
 
-    @Override
     public Optional<Edge> getEdgeBetween(String firstId, String secondId) {
         return firstId.equals(secondId) ?
                 Optional.empty() :
                 incidenceMap.get(firstId).stream().filter(edge -> edge.isIncidentTo(secondId)).findAny();
     }
 
-    @Override
     public Map<String, Set<Edge>> getIncidenceMap() {
         return incidenceMap;
     }
 
-    @Override
     public Optional<Queue<Vertex>> getPathBetween(String firstId, String secondId) {
         return searchPathBetween(secondId, firstId, new TraverseHelper());
     }
 
-    @Override
+    public Set<Vertex> getAllVertices() {
+        return vertices;
+    }
+
     public Set<String> getAllVerticesIds() {
-        Set<String> allVertices = new HashSet<>(getVertexAmount());
-        allVertices.addAll(leftVertices);
-        allVertices.addAll(rightVertices);
-        return allVertices;
+        return vertices.stream().map(Vertex::getId).collect(toSet());
     }
 
-    @Override
     public int getVertexAmount() {
-        return rightVertices.size() + leftVertices.size();
+        return vertices.size();
     }
 
-    @Override
     public int getEdgeAmount() {
         return edges.size();
     }
 
-    @Override
     public Set<Edge> getEdgesBetween(Vertex anchorVertex, Set<Vertex> surroundingVertices) {
         Set<Edge> set = new HashSet<>();
         for (Vertex v : surroundingVertices) {
@@ -162,7 +111,6 @@ public class BiGraphImpl implements BiGraph {
         return set;
     }
 
-    @Override
     public int degree(String vertexId) {
         return incidenceMap.getOrDefault(vertexId, Collections.emptySet()).size();
     }
@@ -170,9 +118,9 @@ public class BiGraphImpl implements BiGraph {
     private Optional<Queue<Vertex>> searchPathBetween(String destinationVertexId, String current, TraverseHelper traversal) {
         if (current.equals(destinationVertexId)) {
             traversal.finish();
-            return Optional.of(traversal.getVisitHistory());
+            return Optional.of(traversal.getVisitResult());
         } else {
-            traversal.pushToVisitPath(getVertexByIdOrFail(current));
+            traversal.pushToVisitResult(getVertexByIdOrFail(current));
             traversal.markVertex(current, IN_PROGRESS);
             Set<Vertex> unvisitedNeighbours = getNeighbours(current)
                     .stream().filter(n -> traversal.statusOfVertex(n) == UNTOUCHED).collect(toSet());
@@ -180,11 +128,11 @@ public class BiGraphImpl implements BiGraph {
                 traversal.markVertex(current, DONE);
             } else {
                 Iterator<Vertex> iterator = unvisitedNeighbours.iterator();
-                while (iterator.hasNext() && !traversal.isFinished()) {
+                while (iterator.hasNext() && traversal.isNotFinished()) {
                     String neighbourId = iterator.next().getId();
                     searchPathBetween(destinationVertexId, neighbourId, traversal);
-                    if (!traversal.isFinished()) {
-                        traversal.popFromVisitPath();
+                    if (traversal.isNotFinished()) {
+                        traversal.popFromVisitResult();
                     }
                 }
             }
@@ -192,13 +140,47 @@ public class BiGraphImpl implements BiGraph {
         }
     }
 
-    @Override
-    public String toString() {
-        return "BiGraphImpl{" + "\n" +
-                "   leftVertices=" + leftVertices + ",\n," +
-                "   rightVertices=" + rightVertices + ",\n" +
-                "   edges=" + edges + "\n" +
-                '}';
+    public Edge getExistingEdge(Vertex first, Vertex second){
+        return getEdgeBetween(first.getId(), second.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Edge between " + first + " and " + second + " not found"));
     }
 
+    public Optional<Queue<Vertex>> getPathBetween(Vertex first, Vertex second){
+        return getPathBetween(first.getId(), second.getId());
+    }
+
+    public Optional<Edge> getEdgeBetween(Vertex first, Vertex second){
+        return getEdgeBetween(first.getId(), second.getId());
+    }
+
+    public Boolean areConnected(String leftId, String rightId){
+        return getPathBetween(leftId, rightId).isPresent();
+    }
+
+    public Boolean areConnected(Vertex a, Vertex b){
+        return areConnected(a.getId(), b.getId());
+    }
+
+    public Vertex getVertexByIdOrFail(String id){
+        return getVertexById(id).orElseThrow(() -> new IllegalArgumentException("No vertex with id " + id + " found"));
+    }
+
+    public Set<Vertex> getNeighbours(Vertex vertex){
+        return getNeighbours(vertex.getId());
+    }
+
+    public Set<Vertex> getNeighboursThat(Predicate<Vertex> vertexPredicate, Vertex vertex){
+        return getNeighboursThat(vertexPredicate, vertex.getId());
+    }
+
+    public int degree(Vertex vertex){
+        return degree(vertex.getId());
+    }
+
+    public GenericGraph copy() {
+        GenericGraph cloneGraph = new GenericGraph();
+        vertices.stream().map(Vertex::copy).forEach(cloneGraph::addVertex);
+        edges.stream().map(Edge::copy).forEach(cloneGraph::addEdge);
+        return cloneGraph;
+    }
 }

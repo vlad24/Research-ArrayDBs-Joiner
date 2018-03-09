@@ -1,18 +1,14 @@
 package com.tfpower.arraydbs.beans.impl;
 
-import com.tfpower.arraydbs.beans.BiGraph;
-import com.tfpower.arraydbs.beans.BiGraphParseConfig;
 import com.tfpower.arraydbs.beans.BiGraphParser;
-import com.tfpower.arraydbs.domain.Edge;
-import com.tfpower.arraydbs.domain.Vertex;
-import com.tfpower.arraydbs.util.Constants;
+import com.tfpower.arraydbs.entity.BiGraph;
+import com.tfpower.arraydbs.entity.Edge;
+import com.tfpower.arraydbs.entity.Vertex;
 import com.tfpower.arraydbs.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -27,9 +23,6 @@ import static java.util.stream.Collectors.toList;
 @Component
 public class BiGraphFileIncListParser extends BiGraphParser {
 
-    @Value("${inc_lists_graph_file_name}")
-    private String fileName;
-
     private  static  final Logger logger = LoggerFactory.getLogger(BiGraphFileIncListParser.class);
 
     public static final String CONFIG_PREFIX = "@";
@@ -41,12 +34,6 @@ public class BiGraphFileIncListParser extends BiGraphParser {
     public static final String NEIGHBOUR_SEP_REGEXP = "->";
 
     public BiGraphFileIncListParser() {
-    }
-
-
-    @Override
-    protected String getFileName() throws IOException {
-        return fileName;
     }
 
     @Override
@@ -71,8 +58,8 @@ public class BiGraphFileIncListParser extends BiGraphParser {
     protected void fillBiGraph(List<String> contents, BiGraphParseConfig config, final BiGraph biGraph) {
         String firstClassVerticesRaw = contents.get(0).trim();
         String secondClassVerticesRaw = contents.get(1).trim();
-        Arrays.stream(firstClassVerticesRaw.split(ELEMENT_SEP_REGEXP)).forEach(p -> biGraph.addFirstClassVertex(parseVertex(p)));
-        Arrays.stream(secondClassVerticesRaw.split(ELEMENT_SEP_REGEXP)).forEach(p -> biGraph.addSecondClassVertex(parseVertex(p)));
+        Arrays.stream(firstClassVerticesRaw.split(ELEMENT_SEP_REGEXP)).forEach(p -> biGraph.addLeftVertex(parseVertex(p)));
+        Arrays.stream(secondClassVerticesRaw.split(ELEMENT_SEP_REGEXP)).forEach(p -> biGraph.addRightVertex(parseVertex(p)));
         List<Pair<String, List<String>>> links = contents.stream().skip(2).map(this::parseLinks).collect(toList());
         links.forEach(link ->
                 link.getRight().forEach(element ->
