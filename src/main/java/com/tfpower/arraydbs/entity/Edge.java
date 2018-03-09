@@ -67,7 +67,7 @@ public class Edge {
     }
 
     private String computeId() {
-        return String.valueOf(start) + "<-->" + String.valueOf(end);
+        return String.valueOf(start) + "<-->" + String.valueOf(end) + " " + mark;
     }
 
     public String endDifferingFrom(String id) {

@@ -42,13 +42,13 @@ public class GenericGraph {
         return startKnown && endKnown;
     }
 
-    public Set<Edge> getEdges() {
+    public Set<Edge> getAllEdges() {
         return edges;
     }
 
     public Set<Vertex> getNeighbours(String vertexId) {
         return incidenceMap.getOrDefault(vertexId, Collections.emptySet()).stream()
-                .map(e -> getVertexByIdOrFail(e.endDifferingFrom(vertexId)))
+                .map(e -> getExistingVertex(e.endDifferingFrom(vertexId)))
                 .collect(toSet());
     }
 
@@ -75,6 +75,16 @@ public class GenericGraph {
                 incidenceMap.get(firstId).stream().filter(edge -> edge.isIncidentTo(secondId)).findAny();
     }
 
+    public Set<Edge> getAllEdgesBetween(Vertex first, Vertex second) {
+        return getAllEdgesBetween(first.getId(), second.getId());
+    }
+
+    public Set<Edge> getAllEdgesBetween(String firstId, String secondId) {
+        return firstId.equals(secondId) ?
+                Collections.emptySet() :
+                incidenceMap.get(firstId).stream().filter(edge -> edge.isIncidentTo(secondId)).collect(toSet());
+    }
+
     public Map<String, Set<Edge>> getIncidenceMap() {
         return incidenceMap;
     }
@@ -99,7 +109,7 @@ public class GenericGraph {
         return edges.size();
     }
 
-    public Set<Edge> getEdgesBetween(Vertex anchorVertex, Set<Vertex> surroundingVertices) {
+    public Set<Edge> getEdgesAround(Vertex anchorVertex, Set<Vertex> surroundingVertices) {
         Set<Edge> set = new HashSet<>();
         for (Vertex v : surroundingVertices) {
             Optional<Edge> edgeBetween = getEdgeBetween(anchorVertex, v);
@@ -120,7 +130,7 @@ public class GenericGraph {
             traversal.finish();
             return Optional.of(traversal.getVisitResult());
         } else {
-            traversal.pushToVisitResult(getVertexByIdOrFail(current));
+            traversal.pushToVisitResult(getExistingVertex(current));
             traversal.markVertex(current, IN_PROGRESS);
             Set<Vertex> unvisitedNeighbours = getNeighbours(current)
                     .stream().filter(n -> traversal.statusOfVertex(n) == UNTOUCHED).collect(toSet());
@@ -161,8 +171,9 @@ public class GenericGraph {
         return areConnected(a.getId(), b.getId());
     }
 
-    public Vertex getVertexByIdOrFail(String id){
-        return getVertexById(id).orElseThrow(() -> new IllegalArgumentException("No vertex with id " + id + " found"));
+    public Vertex getExistingVertex(String id){
+        return getVertexById(id)
+                .orElseThrow(() -> new IllegalArgumentException("No vertex with id " + id + " found among: " + vertices));
     }
 
     public Set<Vertex> getNeighbours(Vertex vertex){
@@ -181,6 +192,7 @@ public class GenericGraph {
         GenericGraph cloneGraph = new GenericGraph();
         vertices.stream().map(Vertex::copy).forEach(cloneGraph::addVertex);
         edges.stream().map(Edge::copy).forEach(cloneGraph::addEdge);
+        cloneGraph.vertexIndex = new HashMap<>(this.vertexIndex);
         return cloneGraph;
     }
 }

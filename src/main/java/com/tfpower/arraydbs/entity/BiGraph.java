@@ -44,11 +44,11 @@ public class BiGraph extends GenericGraph {
 
 
     public Set<Vertex> getLeftVertices() {
-        return leftVerticesIds.stream().map(this::getVertexByIdOrFail).collect(Collectors.toSet());
+        return leftVerticesIds.stream().map(this::getExistingVertex).collect(Collectors.toSet());
     }
 
     public Set<Vertex> getRightVertices() {
-        return rightVerticesIds.stream().map(this::getVertexByIdOrFail).collect(Collectors.toSet());
+        return rightVerticesIds.stream().map(this::getExistingVertex).collect(Collectors.toSet());
     }
 
     @Override
@@ -67,5 +67,9 @@ public class BiGraph extends GenericGraph {
 
     public boolean areDirectlyConnected(Vertex vertex1, Vertex vertex2) {
         return getEdgeBetween(vertex1, vertex2).isPresent();
+    }
+
+    public GenericGraph asGenericGraph() {
+        return super.copy();
     }
 }

@@ -1,6 +1,5 @@
 package com.tfpower.arraydbs.entity;
 
-import com.sun.corba.se.impl.orbutil.graph.Graph;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -23,7 +22,7 @@ public class TraverseHelper {
     private Deque<Vertex> visitBuffer;
     private Map<String, Status> vertexStatus;
     private Map<String, Status> edgeStatus;
-    private Map<Status, Set<String>> statusesInfo;
+    private Map<Status, Set<String>> statusVertices;
     private Map<String, Integer> vertexVisitCount;
     private BiFunction<Integer, Vertex, Integer> accumulatorUpdater;
     private Integer accumulator;
@@ -35,7 +34,7 @@ public class TraverseHelper {
         this.vertexVisitCount = new HashMap<>();
         this.vertexStatus = new HashMap<>();
         this.edgeStatus = new HashMap<>();
-        this.statusesInfo = new HashMap<>(Status.values().length);
+        this.statusVertices = new HashMap<>(Status.values().length);
         this.accumulator = 0;
         accumulatorUpdater = (acc, v) -> acc;
     }
@@ -68,9 +67,9 @@ public class TraverseHelper {
     public void markVertex(String vertexId, Status newStatus) {
         Status oldStatus = vertexStatus.get(vertexId);
         if (oldStatus != newStatus) {
-            statusesInfo.getOrDefault(oldStatus, emptySet()).remove(vertexId);
-            statusesInfo.computeIfAbsent(newStatus, status -> new HashSet<>());
-            statusesInfo.compute(newStatus, (status, vertices) -> {
+            statusVertices.getOrDefault(oldStatus, emptySet()).remove(vertexId);
+            statusVertices.computeIfAbsent(newStatus, status -> new HashSet<>());
+            statusVertices.compute(newStatus, (status, vertices) -> {
                 vertices.add(vertexId);
                 return vertices;
             });
@@ -86,12 +85,16 @@ public class TraverseHelper {
         markEdge(edge.getId(), progress);
     }
 
+    public void markEdges(Set<Edge> edges, Status progress) {
+        edges.forEach(edge -> markEdge(edge, progress));
+    }
+
     public Status statusOfVertex(Vertex v) {
         return vertexStatus.getOrDefault(v.getId(), Status.UNTOUCHED);
     }
 
     public Status statusOfEdge(Edge edge) {
-        return vertexStatus.getOrDefault(edge.getId(), Status.UNTOUCHED);
+        return edgeStatus.getOrDefault(edge.getId(), Status.UNTOUCHED);
     }
 
     public Deque<Vertex> getVisitResult() {
@@ -119,7 +122,7 @@ public class TraverseHelper {
     }
 
     public int countVerticesMarked(Status status) {
-        return statusesInfo.getOrDefault(status, emptySet()).size();
+        return statusVertices.getOrDefault(status, emptySet()).size();
     }
 
     public void markVertices(Collection<String> vertexIds, Status status) {
@@ -157,7 +160,7 @@ public class TraverseHelper {
                 "  vertexStatus=" + vertexStatus + "\n" +
                 "  vertexVisitCount=" + vertexVisitCount + "\n" +
                 "  edgeStatus=" + edgeStatus + "\n" +
-                "  statusesInfo=" + statusesInfo + "\n" +
+                "  statusVertices=" + statusVertices + "\n" +
                 "  accumulatorUpdater=" + accumulatorUpdater + "\n" +
                 "  visitResult=" + visitResult + "\n" +
                 '}';

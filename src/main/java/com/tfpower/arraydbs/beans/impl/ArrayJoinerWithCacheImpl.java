@@ -6,8 +6,6 @@ import com.tfpower.arraydbs.entity.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
@@ -47,7 +45,7 @@ public class ArrayJoinerWithCacheImpl implements ArrayJoiner {
             traverseHelper.updateAccumulatorBy(currentVertex);
             cache.add(currentVertex);
             logger.debug("Cache has been updated by {}. Current: {}", currentVertex, cache);
-            Set<Edge> edgesInCache = bGraph.getEdgesBetween(currentVertex, cache.getAllEntries());
+            Set<Edge> edgesInCache = bGraph.getEdgesAround(currentVertex, cache.getAllEntries());
             logger.debug("Processing edges that cache allows: {}", edgesInCache);
             edgesInCache.forEach(e -> traverseHelper.markEdge(e, DONE));
             logger.debug("Edge status: {}", traverseHelper.getEdgeStatus());
@@ -75,7 +73,7 @@ public class ArrayJoinerWithCacheImpl implements ArrayJoiner {
     private Vertex pickFirstVertex(BiGraph biGraph) {
 //        return Randomizer.pickRandomFrom(vertices);
         return biGraph.getAllVerticesIds().stream()
-                .map(biGraph::getVertexByIdOrFail)
+                .map(biGraph::getExistingVertex)
                 .min(Comparator.comparingInt((ToIntFunction<Vertex>) biGraph::degree)
                         .thenComparing(Vertex::getWeight))
                 .orElseThrow(() -> new IllegalStateException("No min degree vertex found"));
