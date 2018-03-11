@@ -1,8 +1,5 @@
 package com.tfpower.arraydbs.config;
 
-import com.tfpower.arraydbs.beans.ArrayJoiner;
-import com.tfpower.arraydbs.beans.impl.ArrayJoinerEulerImpl;
-import com.tfpower.arraydbs.beans.impl.ArrayJoinerWithCacheImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;

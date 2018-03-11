@@ -1,31 +1,38 @@
 package com.tfpower.arraydbs.beans.impl;
 
 import com.tfpower.arraydbs.beans.Cache;
-import com.tfpower.arraydbs.util.Randomizer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Component
 public class CacheImpl<T> implements Cache<T> {
 
+    private AtomicInteger timer;
     private int capacity;
-    private Set<T> cachedItems;
+    private Set<CacheEntry<T>> cachedItems;
 
     @Autowired
     public CacheImpl(@Value("${cache_capacity}") Integer capacity) {
         this.capacity = capacity;
         this.cachedItems = new HashSet<>(capacity);
+        this.timer = new AtomicInteger(0);
     }
 
     @Override
-    public T add(T newEntry) {
+    public CacheEntry<T> load(T newEntry) {
+        CacheEntry<T> newCacheEntry = new CacheEntry<>(timer.getAndIncrement(), newEntry);
         if (cachedItems.size() < capacity) {
-            cachedItems.add(newEntry);
-            return null;
+            cachedItems.add(newCacheEntry);
+            return newCacheEntry;
         } else {
             throw new IllegalStateException(this + " has no more space to store " + newEntry);
         }
@@ -37,29 +44,36 @@ public class CacheImpl<T> implements Cache<T> {
     }
 
     @Override
+    public boolean contains(T searchedValue) {
+        return cachedItems.stream().anyMatch(e -> e.getValue().equals(searchedValue));
+    }
+
+    @Override
     public int getCapacity() {
         return capacity;
     }
 
     @Override
-    public Set<T> getAllEntries() {
-        return cachedItems;
+    public Set<T> getAllValues() {
+        return cachedItems.stream().map(CacheEntry::getValue).collect(Collectors.toSet());
     }
 
     @Override
-    public void clear(Predicate<T> predicate) {
-        cachedItems.removeIf(predicate);
+    public Set<T> evictAll(Predicate<CacheEntry<T>> predicate) {
+        Set<CacheEntry<T>> toRemove = cachedItems.stream().filter(predicate).collect(Collectors.toSet());
+        cachedItems.removeAll(toRemove);
+        return toRemove.stream().map(CacheEntry::getValue).collect(Collectors.toSet());
     }
 
     @Override
-    public T evict(Comparator<T> weighter) {
-        Optional<T> candidate = cachedItems.stream().max(weighter);
+    public T evict(Comparator<CacheEntry<T>> weigher) {
+        Optional<CacheEntry<T>> candidate = cachedItems.stream().max(weigher);
         candidate.ifPresent(t -> cachedItems.remove(t));
-        return candidate.orElse(null);
+        return candidate.map(CacheEntry::getValue).orElse(null);
     }
 
     @Override
     public String toString() {
-        return "Cache<" + getCurrentSize() + "/" + capacity + "> " + cachedItems ;
+        return "Cache<" + getCurrentSize() + "/" + capacity + "> " + getAllValues();
     }
 }

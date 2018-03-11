@@ -56,13 +56,36 @@ public class GenericGraph {
         return getNeighbours(vertexId).stream().filter(vertexPredicate).collect(toSet());
     }
 
-    public Set<Vertex> getSurroundingsOf(Set<Vertex> vertices) {
-        HashSet<Vertex> surroundings = new HashSet<>();
+    public Set<Vertex> getVertexSurrounding(Set<Vertex> vertices) {
+        Set<Vertex> surroundings = new HashSet<>();
         for (Vertex vertex: vertices){
             surroundings.addAll(getNeighbours(vertex));
         }
         surroundings.removeAll(vertices);
         return surroundings;
+    }
+
+    public Set<Edge> getEdgeSurrounding(Set<Vertex> vertices) {
+        Set<Vertex> vertexSurrounding = getVertexSurrounding(vertices);
+        Set<Edge> edgeSurroundings = vertices.stream().map(v -> getEdgesAround(v, vertexSurrounding))
+                .reduce(new HashSet<>(), (acc, edges) -> {
+                    acc.addAll(edges);
+                    return acc;
+                });
+        edgeSurroundings.removeAll(getAllEdgesWithin(vertices));
+        return edgeSurroundings;
+    }
+
+    private Set<Edge> getAllEdgesWithin(Set<Vertex> vertices) {
+        Set<Edge> result = new HashSet<>(vertices.size() * vertices.size());
+        for (Vertex vertex : vertices) {
+            for (Vertex otherVertex : vertices) {
+                if (!vertex.equals(otherVertex)) {
+                    getEdgeBetween(vertex, otherVertex).ifPresent(result::add);
+                }
+            }
+        }
+        return result;
     }
 
     public Optional<Vertex> getVertexById(String id) {
@@ -194,5 +217,14 @@ public class GenericGraph {
         edges.stream().map(Edge::copy).forEach(cloneGraph::addEdge);
         cloneGraph.vertexIndex = new HashMap<>(this.vertexIndex);
         return cloneGraph;
+    }
+
+    @Override
+    public String toString() {
+        return "GenericGraph{" + "\n\t" +
+                " vertices=" + vertices + ",\n\t" +
+                " edges=" + edges + ",\n\t" +
+                " incidenceMap=" + incidenceMap + "\n" +
+                '}';
     }
 }

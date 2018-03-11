@@ -2,7 +2,8 @@ package com.tfpower.arraydbs.entity;
 
 import com.tfpower.arraydbs.util.Constants;
 
-import java.util.Objects;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by vlad on 21.02.18.
@@ -72,6 +73,13 @@ public class Edge {
 
     public String endDifferingFrom(String id) {
         return start.equals(id) ? end : start;
+    }
+
+    public Set<String> nibs() {
+        HashSet<String> nibs = new HashSet<>(2);
+        nibs.add(getStart());
+        nibs.add(getEnd());
+        return nibs;
     }
 
     @Override

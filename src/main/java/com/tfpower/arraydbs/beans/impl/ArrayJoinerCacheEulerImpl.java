@@ -1,12 +1,13 @@
 package com.tfpower.arraydbs.beans.impl;
 
 import com.tfpower.arraydbs.beans.ArrayJoiner;
+import com.tfpower.arraydbs.beans.Cache;
 import com.tfpower.arraydbs.entity.*;
 import com.tfpower.arraydbs.util.Constants;
 import com.tfpower.arraydbs.util.Randomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Primary;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -21,15 +22,16 @@ import static java.util.stream.Collectors.toSet;
  * Created by vlad on 24.01.18.
  */
 @Component
-@Primary
-public class ArrayJoinerEulerImpl implements ArrayJoiner {
+public class ArrayJoinerCacheEulerImpl implements ArrayJoiner {
 
-    private final static Logger logger = LoggerFactory.getLogger(ArrayJoinerEulerImpl.class);
+    private final static Logger logger = LoggerFactory.getLogger(ArrayJoinerCacheEulerImpl.class);
+    @Autowired
+    Cache<Vertex> cache;
 
     public JoinReport join(BiGraph bGraph) {
         GenericGraph graph = augment(bGraph);
         TraverseHelper traverseHelper = new TraverseHelper();
-        findEulerCycle(graph, traverseHelper);
+        buildCacheAwareEulerCycle(graph, traverseHelper);
         return JoinReport.fromTraversal(traverseHelper);
     }
 
@@ -68,26 +70,38 @@ public class ArrayJoinerEulerImpl implements ArrayJoiner {
     }
 
 
-    private void findEulerCycle(GenericGraph graph, TraverseHelper traverse) {
+    private void buildCacheAwareEulerCycle(GenericGraph graph, TraverseHelper traverse) {
         boolean graphIsValid = graph.getAllVertices().stream().allMatch(v -> graph.degree(v) % 2 == 0);
         if (!graphIsValid) {
             throw new IllegalArgumentException("Invalid graph passed to euler cycle path search method :" + graph);
         }
+        logger.debug(graph + "");
         Vertex current = Randomizer.pickRandomFrom(graph.getAllVertices());
         traverse.pushToVisitBuffer(current);
         traverse.setAccumulatorUpdater((acc, v) -> acc + v.getWeight());
         while (traverse.isNotFinished()) {
             final Vertex examinedVertex = current;
             Set<Vertex> reachableNeighbours = graph.getNeighboursThat(
-                    nbr -> graph.getAllEdgesBetween(nbr, examinedVertex).stream().anyMatch(
-                            nbrEdge -> traverse.statusOfEdge(nbrEdge) != DONE
-                    ),
+                    neighbor -> graph.getAllEdgesBetween(neighbor, examinedVertex).stream()
+                            .anyMatch(neighborEdge -> traverse.statusOfEdge(neighborEdge) != DONE),
                     current
             );
             if (reachableNeighbours.isEmpty()) {
+                logger.debug("Current is {}", current);
                 traverse.pushToVisitResult(current);     // push to circuit
-                traverse.accountVisit(current);
-                traverse.updateAccumulatorBy(current);
+                if (!cache.contains(current)) {
+                    logger.debug("Trying to add {}", current);
+                    if (cache.getCurrentSize() < cache.getCapacity()) {
+                        cache.load(current);
+                        logger.debug("Loaded to free space!");
+                    } else {
+                        Vertex evicted = cache.evict(Cache.oldest());
+                        logger.debug("Loaded instead of {}", evicted);
+                        cache.load(current);
+                    }
+                    traverse.accountVisit(current);
+                    traverse.updateAccumulatorBy(current);
+                }
                 current = traverse.popFromVisitBuffer(); // reset the 'current' one
             } else {
                 traverse.pushToVisitBuffer(current);

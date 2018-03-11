@@ -7,7 +7,6 @@ import com.tfpower.arraydbs.entity.BiGraph;
 import com.tfpower.arraydbs.entity.JoinReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
@@ -21,10 +20,10 @@ public class Main {
         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
         BiGraphProvider biGraphProvider = context.getBean(BiGraphProvider.class);
         BiGraph testGraph = biGraphProvider.getTestGraph();
-        ArrayJoiner arrayJoinerByCacheHeuristics = context.getBean(ArrayJoiner.class);
-        JoinReport joinReport = arrayJoinerByCacheHeuristics.join(testGraph);
-        logger.debug("Join process is over: {}",  joinReport);
-        logger.info("Explaining: {}", joinReport.getLoadFrequencies().values()
+        ArrayJoiner arrayJoiner = context.getBean(ArrayJoiner.class);
+        JoinReport joinReport = arrayJoiner.join(testGraph);
+        logger.info("Join process is over: {}", joinReport);
+        logger.info("Load stats: {}", joinReport.getLoadFrequencies().values()
                 .stream().mapToInt(Integer::intValue).summaryStatistics());
     }
 
