@@ -32,7 +32,7 @@ public class BiGraph extends GenericGraph {
 
     @Override
     public void addEdge(Edge edge) {
-        if (super.isAllowed(edge) && doesNotBreakBiProperty(edge)){
+        if (super.isEdgeAllowed(edge) && doesNotBreakBiProperty(edge)){
             super.addEdge(edge);
         }
     }

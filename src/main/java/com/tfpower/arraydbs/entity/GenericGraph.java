@@ -26,7 +26,7 @@ public class GenericGraph {
     }
 
     public void addEdge(Edge edge) {
-        if (!isAllowed(edge)){
+        if (!isEdgeAllowed(edge)){
             throw new IllegalArgumentException("Unknown vertices being connected");
         }
         edges.add(edge);
@@ -36,7 +36,7 @@ public class GenericGraph {
         incidenceMap.get(edge.getEnd()).add(edge);
     }
 
-    protected boolean isAllowed(Edge edge) {
+    protected boolean isEdgeAllowed(Edge edge) {
         boolean startKnown = vertices.stream().anyMatch(vertex -> vertex.getId().equals(edge.getStart()));
         boolean endKnown = vertices.stream().anyMatch(vertex -> vertex.getId().equals(edge.getEnd()));
         return startKnown && endKnown;
@@ -146,6 +146,11 @@ public class GenericGraph {
 
     public int degree(String vertexId) {
         return incidenceMap.getOrDefault(vertexId, Collections.emptySet()).size();
+    }
+
+
+    public Map<String, Set<String>> computeReachability(int level) {
+        return null;
     }
 
     private Optional<Queue<Vertex>> searchPathBetween(String destinationVertexId, String current, TraverseHelper traversal) {
