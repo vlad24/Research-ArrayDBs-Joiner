@@ -25,6 +25,7 @@ import static java.util.stream.Collectors.toSet;
 public class ArrayJoinerCacheEulerImpl implements ArrayJoiner {
 
     private final static Logger logger = LoggerFactory.getLogger(ArrayJoinerCacheEulerImpl.class);
+
     @Autowired
     Cache<Vertex> cache;
 
@@ -75,7 +76,6 @@ public class ArrayJoinerCacheEulerImpl implements ArrayJoiner {
         if (!graphIsValid) {
             throw new IllegalArgumentException("Invalid graph passed to euler cycle path search method :" + graph);
         }
-        logger.debug(graph + "");
         Vertex current = Randomizer.pickRandomFrom(graph.getAllVertices());
         traverse.pushToVisitBuffer(current);
         traverse.setAccumulatorUpdater((acc, v) -> acc + v.getWeight());

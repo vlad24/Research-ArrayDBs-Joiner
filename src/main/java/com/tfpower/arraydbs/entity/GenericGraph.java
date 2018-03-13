@@ -1,17 +1,24 @@
 package com.tfpower.arraydbs.entity;
 
+import com.tfpower.arraydbs.util.Randomizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
 import java.util.function.Predicate;
 
 import static com.tfpower.arraydbs.entity.TraverseHelper.Status.*;
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.*;
 
 public class GenericGraph {
+
+    private final static Logger logger = LoggerFactory.getLogger(GenericGraph.class);
 
     protected Set<Vertex> vertices;
     protected Set<Edge> edges;
     protected Map<String, Vertex> vertexIndex;
     protected Map<String, Set<Edge>> incidenceMap;
+
 
     public GenericGraph() {
         vertices = new HashSet<>();
@@ -49,6 +56,12 @@ public class GenericGraph {
     public Set<Vertex> getNeighbours(String vertexId) {
         return incidenceMap.getOrDefault(vertexId, Collections.emptySet()).stream()
                 .map(e -> getExistingVertex(e.endDifferingFrom(vertexId)))
+                .collect(toSet());
+    }
+
+    public Set<String> getNeighboursIds(String vertexId) {
+        return incidenceMap.getOrDefault(vertexId, Collections.emptySet()).stream()
+                .map(e -> e.endDifferingFrom(vertexId))
                 .collect(toSet());
     }
 
@@ -149,10 +162,6 @@ public class GenericGraph {
     }
 
 
-    public Map<String, Set<String>> computeReachability(int level) {
-        return null;
-    }
-
     private Optional<Queue<Vertex>> searchPathBetween(String destinationVertexId, String current, TraverseHelper traversal) {
         if (current.equals(destinationVertexId)) {
             traversal.finish();
@@ -214,6 +223,61 @@ public class GenericGraph {
 
     public int degree(Vertex vertex){
         return degree(vertex.getId());
+    }
+
+
+    public Map<String, Set<String>> computeReachSets(int level) {
+        Set<String> allVerticesIds = getAllVerticesIds();
+        Map<String, Set<String>> result = new HashMap<>(allVerticesIds.size());
+        if (level == 0){
+            allVerticesIds.forEach(v -> result.put(v, Collections.singleton(v)));
+        } else if (level >= getEdgeAmount()){
+            allVerticesIds.forEach(v -> { HashSet<String> allButV = new HashSet<>(allVerticesIds); allButV.remove(v); result.put(v, allButV);});
+        } else {
+            Map<String, List<Set<String>>> reachSetsMap = new HashMap<>();
+            for (String vertexId : allVerticesIds) {
+                List<Set<String>> initial = new ArrayList<>(Collections.nCopies(level, null));
+                initial.set(0, getNeighboursIds(vertexId));
+                reachSetsMap.put(vertexId, initial);
+            }
+            for (String vertexId : allVerticesIds) {
+                computeReachSetsHelper(vertexId, new HashSet<>(Collections.singleton(vertexId)), level, reachSetsMap);
+            }
+            reachSetsMap.forEach((key, value) -> result.put(key, value.get(level - 1)));
+        }
+        return result;
+    }
+
+
+    private Set<String> computeReachSetsHelper(String current, Set<String> ignored, int level, Map<String, List<Set<String>>> reachSetsBuffer) {
+        Set<String> reachSet = new HashSet<>();
+        Set<String> neighbourIds = getNeighboursIds(current);
+        if (level == 1){
+            reachSet.addAll(neighbourIds);
+            reachSet.removeAll(ignored);
+            return reachSet;
+        } else {
+            reachSet.addAll(neighbourIds);
+            for (String neighbourId: neighbourIds){
+                if (!ignored.contains(neighbourId)) {
+                    Set<String> alreadyComputedValues = reachSetsBuffer.get(neighbourId).get(level - 2);
+                    if (reachSetsBuffer.containsKey(neighbourId) && alreadyComputedValues != null) {
+                        Set<String> valuesToAdd = new HashSet<>(alreadyComputedValues);
+                        valuesToAdd.removeAll(ignored);
+                        reachSet.addAll(valuesToAdd);
+                    } else {
+                        HashSet<String> furtherIgnored = new HashSet<>(ignored);
+                        furtherIgnored.addAll(neighbourIds);
+                        furtherIgnored.add(current);
+                        Set<String> reachSetNbrPart = computeReachSetsHelper(neighbourId, furtherIgnored, level - 1, reachSetsBuffer);
+                        reachSet.addAll(reachSetNbrPart);
+                    }
+                }
+            }
+            reachSetsBuffer.get(current).set(level - 1, reachSet);
+            logger.debug("Setting {} level of {} to {}", level, current, reachSet);
+            return reachSet;
+        }
     }
 
     public GenericGraph copy() {

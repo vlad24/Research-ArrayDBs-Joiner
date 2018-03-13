@@ -1,7 +1,7 @@
 package com.tfpower.arraydbs.entity;
 
-import com.sun.corba.se.impl.orbutil.graph.Graph;
 import com.tfpower.arraydbs.util.Constants;
+import com.tfpower.arraydbs.util.Pair;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -132,15 +132,42 @@ public class GenericGraphTest {
 
 
     @Test
-    public void computeReachability() throws Exception {
-        Map<String, Set<String>> reachMap = testGraph.computeReachability(2);
-        assertEquals(reachMap.get("1"), new HashSet<>(Arrays.asList("1", "2", "3", "4", "5")));
-        assertEquals(reachMap.get("2"), new HashSet<>(Arrays.asList("2", "1", "3", "4", "6")));
-        assertEquals(reachMap.get("3"), new HashSet<>(Arrays.asList("3", "2", "6", "1")));
-        assertEquals(reachMap.get("4"), new HashSet<>(Arrays.asList("4", "1", "5", "2")));
-        assertEquals(reachMap.get("5"), new HashSet<>(Arrays.asList("5", "4", "1")));
-        assertEquals(reachMap.get("6"), new HashSet<>(Arrays.asList("6", "3", "2")));
+    public void computeReachValues_WhenLevelIsTwo_ThenSiblingsAndNeighboursAreRetuned() throws Exception {
+        Map<String, Set<String>> reachMap = testGraph.computeReachSets(2);
+        assertEquals(new HashSet<>(Arrays.asList("2", "3", "4", "5")),      reachMap.get("1"));
+        assertEquals(new HashSet<>(Arrays.asList("1", "3", "4", "6")), reachMap.get("2"));
+        assertEquals(new HashSet<>(Arrays.asList("2", "6", "1")),           reachMap.get("3"));
+        assertEquals(new HashSet<>(Arrays.asList("1", "5", "2")),           reachMap.get("4"));
+        assertEquals(new HashSet<>(Arrays.asList("4", "1")),                reachMap.get("5"));
+        assertEquals(new HashSet<>(Arrays.asList("3", "2")),                reachMap.get("6"));
+    }
 
+    @Test
+    public void computeReachValues_WhenLevelIstVeryHigh_AllVerticesAreReturned() throws Exception {
+        final int level = testGraph.getEdgeAmount();
+        Set<String> allVerticesIds = testGraph.getAllVerticesIds();
+        Map<String, Set<String>> reachMap = testGraph.computeReachSets(level);
+        for (String examinedVertex : allVerticesIds) {
+            HashSet<String> expected = new HashSet<>(allVerticesIds);
+            expected.remove(examinedVertex);
+            assertEquals(expected, reachMap.get(examinedVertex));
+        }
+    }
+
+    @Test
+    public void computeReachValues_WhenLevelIsOne_ThenNeighboursReturned() throws Exception {
+        Map<String, Set<String>> reachMap = testGraph.computeReachSets(1);
+        for (String vertex : testGraph.getAllVerticesIds()) {
+            assertEquals(testGraph.getNeighboursIds(vertex), reachMap.get(vertex));
+        }
+    }
+
+    @Test
+    public void computeReachValues_WhenLevelIsZero_TheVertexIsReturned() throws Exception {
+        Map<String, Set<String>> reachMap = testGraph.computeReachSets(0);
+        for (String vertex : testGraph.getAllVerticesIds()) {
+            assertEquals(Collections.singleton(vertex), reachMap.get(vertex));
+        }
     }
 
 

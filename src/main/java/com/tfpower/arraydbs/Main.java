@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
+import java.util.List;
+
 /**
  * Created by vlad on 24.01.18.
  */
@@ -19,12 +21,14 @@ public class Main {
     public static void main(String[] args) {
         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
         BiGraphProvider biGraphProvider = context.getBean(BiGraphProvider.class);
-        BiGraph testGraph = biGraphProvider.getTestGraph();
+        List<BiGraph> testGraphs = biGraphProvider.getTestGraphs();
         ArrayJoiner arrayJoiner = context.getBean(ArrayJoiner.class);
-        JoinReport joinReport = arrayJoiner.join(testGraph);
-        logger.info("Join process is over: {}", joinReport);
-        logger.info("Load stats: {}", joinReport.getLoadFrequencies().values()
-                .stream().mapToInt(Integer::intValue).summaryStatistics());
+        for (BiGraph testGraph : testGraphs) {
+            JoinReport joinReport = arrayJoiner.join(testGraph);
+            logger.info("Join process is over: {}", joinReport);
+            logger.info("Load stats: {}", joinReport.getLoadFrequencies().values()
+                    .stream().mapToInt(Integer::intValue).summaryStatistics());
+        }
     }
 
 }
