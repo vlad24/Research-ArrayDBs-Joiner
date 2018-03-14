@@ -64,8 +64,8 @@ public class BiGraphFileIncListParser extends BiGraphParser {
         links.forEach(link ->
                 link.getRight().forEach(element ->
                         biGraph.addEdge(new Edge(link.getLeft(), element,
-                                biGraph.getVertexById(link.getLeft()).get().getWeight()
-                                        + biGraph.getVertexById(element).get().getWeight()
+                                biGraph.getVertex(link.getLeft()).get().getWeight()
+                                        + biGraph.getVertex(element).get().getWeight()
                                 ))
                 ));
     }

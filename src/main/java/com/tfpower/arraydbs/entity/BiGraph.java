@@ -66,7 +66,7 @@ public class BiGraph extends GenericGraph {
     }
 
     public boolean areDirectlyConnected(Vertex vertex1, Vertex vertex2) {
-        return getEdgeBetween(vertex1, vertex2).isPresent();
+        return getSingleEdgeBetween(vertex1, vertex2).isPresent();
     }
 
     public GenericGraph asGenericGraph() {

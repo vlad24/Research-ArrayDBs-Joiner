@@ -1,6 +1,5 @@
 package com.tfpower.arraydbs.entity;
 
-import com.tfpower.arraydbs.util.Randomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +29,7 @@ public class GenericGraph {
 
     public void addVertex(Vertex vertex){
         vertices.add(vertex);
+        vertexIndex.put(vertex.getId(), vertex);
     }
 
     public void addEdge(Edge edge) {
@@ -49,8 +49,65 @@ public class GenericGraph {
         return startKnown && endKnown;
     }
 
+    public Optional<Vertex> getVertex(String id) {
+        return Optional.ofNullable(vertexIndex.get(id));
+    }
+
+    public Vertex getExistingVertex(String id){
+        return getVertex(id)
+                .orElseThrow(() -> new IllegalArgumentException("No vertex with id " + id + " found among: " + vertices));
+    }
+
+    public int getVertexAmount() {
+        return vertices.size();
+    }
+
+    /**
+     *
+     * @param vertices
+     * @return
+     */
+    public Set<Vertex> getVertexSurrounding(Set<Vertex> vertices) {
+        Set<Vertex> surroundings = new HashSet<>();
+        for (Vertex vertex: vertices){
+            surroundings.addAll(getNeighbours(vertex));
+        }
+        surroundings.removeAll(vertices);
+        return surroundings;
+    }
+
+
+    public Edge getExistingEdge(Vertex first, Vertex second){
+        return getSingleEdgeBetween(first.getId(), second.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Edge between " + first + " and " + second + " not found"));
+    }
+
+    public Optional<Edge> getSingleEdgeBetween(String firstId, String secondId) {
+        return firstId.equals(secondId) ?
+                Optional.empty() :
+                incidenceMap.get(firstId).stream().filter(edge -> edge.isIncidentTo(secondId)).findAny();
+    }
+
+    public Optional<Edge> getSingleEdgeBetween(Vertex first, Vertex second){
+        return getSingleEdgeBetween(first.getId(), second.getId());
+    }
+
+    public Set<Edge> getAllEdgesBetween(Vertex first, Vertex second) {
+        return getAllEdgesBetween(first.getId(), second.getId());
+    }
+
+    public Set<Edge> getAllEdgesBetween(String firstId, String secondId) {
+        return firstId.equals(secondId) ?
+                Collections.emptySet() :
+                incidenceMap.get(firstId).stream().filter(edge -> edge.isIncidentTo(secondId)).collect(toSet());
+    }
+
     public Set<Edge> getAllEdges() {
         return edges;
+    }
+
+    private Set<String> getAllEdgesIds() {
+        return getAllEdges().stream().map(Edge::getId).collect(toSet());
     }
 
     public Set<Vertex> getNeighbours(String vertexId) {
@@ -69,15 +126,21 @@ public class GenericGraph {
         return getNeighbours(vertexId).stream().filter(vertexPredicate).collect(toSet());
     }
 
-    public Set<Vertex> getVertexSurrounding(Set<Vertex> vertices) {
-        Set<Vertex> surroundings = new HashSet<>();
-        for (Vertex vertex: vertices){
-            surroundings.addAll(getNeighbours(vertex));
-        }
-        surroundings.removeAll(vertices);
-        return surroundings;
+    /**
+     * Get all incident edges to a vertex
+     * @param vertexId vertex to examine
+     * @return edges incident to the provided vertex
+     */
+    public Set<String> getEdgeSurrounding(String vertexId) {
+        return getEdgeSurrounding(Collections.singleton(getExistingVertex(vertexId))).stream().map(Edge::getId).collect(toSet());
     }
 
+
+    /**
+     * Get all edges that are incident to any of the vertex in the provided vertex set
+     * @param vertices vertices to scan edges for around
+     * @return set of edges surrounding the vertex set
+     */
     public Set<Edge> getEdgeSurrounding(Set<Vertex> vertices) {
         Set<Vertex> vertexSurrounding = getVertexSurrounding(vertices);
         Set<Edge> edgeSurroundings = vertices.stream().map(v -> getEdgesAround(v, vertexSurrounding))
@@ -89,44 +152,56 @@ public class GenericGraph {
         return edgeSurroundings;
     }
 
+    /**
+     * Gets all edges for which each nib is contained in vertex set
+     * @param vertices vertex set to examine
+     * @return edges for which each nib is contained in vertex set
+     */
     private Set<Edge> getAllEdgesWithin(Set<Vertex> vertices) {
         Set<Edge> result = new HashSet<>(vertices.size() * vertices.size());
         for (Vertex vertex : vertices) {
             for (Vertex otherVertex : vertices) {
                 if (!vertex.equals(otherVertex)) {
-                    getEdgeBetween(vertex, otherVertex).ifPresent(result::add);
+                    result.addAll(getAllEdgesBetween(vertex, otherVertex));
                 }
             }
         }
         return result;
     }
 
-    public Optional<Vertex> getVertexById(String id) {
-        return Optional.ofNullable(vertexIndex.get(id));
+
+    /**
+     * Given an anchor vertex and surroundings returns edges that connect vertex with surroundings
+     * @param anchorVertex vertex around which to scan edges for
+     * @param surroundingVertices vertex to which scan edges for
+     * @return  edges that connect vertex with surroundings
+     */
+    public Set<Edge> getEdgesAround(Vertex anchorVertex, Set<Vertex> surroundingVertices) {
+        Set<Edge> set = new HashSet<>();
+        for (Vertex v : surroundingVertices) {
+            Optional<Edge> edgeBetween = getSingleEdgeBetween(anchorVertex, v);
+            if (edgeBetween.isPresent()) {
+                Edge edge = edgeBetween.get();
+                set.add(edge);
+            }
+        }
+        return set;
     }
 
-    public Optional<Edge> getEdgeBetween(String firstId, String secondId) {
-        return firstId.equals(secondId) ?
-                Optional.empty() :
-                incidenceMap.get(firstId).stream().filter(edge -> edge.isIncidentTo(secondId)).findAny();
+    public Set<Vertex> getNeighbours(Vertex vertex){
+        return getNeighbours(vertex.getId());
     }
 
-    public Set<Edge> getAllEdgesBetween(Vertex first, Vertex second) {
-        return getAllEdgesBetween(first.getId(), second.getId());
+    public Set<Vertex> getNeighboursThat(Predicate<Vertex> vertexPredicate, Vertex vertex){
+        return getNeighboursThat(vertexPredicate, vertex.getId());
     }
 
-    public Set<Edge> getAllEdgesBetween(String firstId, String secondId) {
-        return firstId.equals(secondId) ?
-                Collections.emptySet() :
-                incidenceMap.get(firstId).stream().filter(edge -> edge.isIncidentTo(secondId)).collect(toSet());
+    public int getEdgeAmount() {
+        return edges.size();
     }
 
     public Map<String, Set<Edge>> getIncidenceMap() {
         return incidenceMap;
-    }
-
-    public Optional<Queue<Vertex>> getPathBetween(String firstId, String secondId) {
-        return searchPathBetween(secondId, firstId, new TraverseHelper());
     }
 
     public Set<Vertex> getAllVertices() {
@@ -137,30 +212,21 @@ public class GenericGraph {
         return vertices.stream().map(Vertex::getId).collect(toSet());
     }
 
-    public int getVertexAmount() {
-        return vertices.size();
-    }
-
-    public int getEdgeAmount() {
-        return edges.size();
-    }
-
-    public Set<Edge> getEdgesAround(Vertex anchorVertex, Set<Vertex> surroundingVertices) {
-        Set<Edge> set = new HashSet<>();
-        for (Vertex v : surroundingVertices) {
-            Optional<Edge> edgeBetween = getEdgeBetween(anchorVertex, v);
-            if (edgeBetween.isPresent()) {
-                Edge edge = edgeBetween.get();
-                set.add(edge);
-            }
-        }
-        return set;
+    public int degree(Vertex vertex){
+        return degree(vertex.getId());
     }
 
     public int degree(String vertexId) {
         return incidenceMap.getOrDefault(vertexId, Collections.emptySet()).size();
     }
 
+    public Optional<Queue<Vertex>> getPathBetween(Vertex first, Vertex second){
+        return getPathBetween(first.getId(), second.getId());
+    }
+
+    public Optional<Queue<Vertex>> getPathBetween(String firstId, String secondId) {
+        return searchPathBetween(secondId, firstId, new TraverseHelper());
+    }
 
     private Optional<Queue<Vertex>> searchPathBetween(String destinationVertexId, String current, TraverseHelper traversal) {
         if (current.equals(destinationVertexId)) {
@@ -187,42 +253,59 @@ public class GenericGraph {
         }
     }
 
-    public Edge getExistingEdge(Vertex first, Vertex second){
-        return getEdgeBetween(first.getId(), second.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Edge between " + first + " and " + second + " not found"));
-    }
-
-    public Optional<Queue<Vertex>> getPathBetween(Vertex first, Vertex second){
-        return getPathBetween(first.getId(), second.getId());
-    }
-
-    public Optional<Edge> getEdgeBetween(Vertex first, Vertex second){
-        return getEdgeBetween(first.getId(), second.getId());
-    }
-
     public Boolean areConnected(String leftId, String rightId){
         return getPathBetween(leftId, rightId).isPresent();
     }
 
-    public Boolean areConnected(Vertex a, Vertex b){
-        return areConnected(a.getId(), b.getId());
+    public Boolean areConnected(Vertex leftVertex, Vertex rightVertex){
+        return areConnected(leftVertex.getId(), rightVertex.getId());
     }
 
-    public Vertex getExistingVertex(String id){
-        return getVertexById(id)
-                .orElseThrow(() -> new IllegalArgumentException("No vertex with id " + id + " found among: " + vertices));
+    public Map<String, Set<String>> computeEdgeSets(int level) {
+        Set<String> allVerticesIds = getAllVerticesIds();
+        Map<String, Set<String>> result = new HashMap<>(allVerticesIds.size());
+        if (level == 0){
+            allVerticesIds.forEach(v -> result.put(v, Collections.emptySet()));
+        } else if (level >= getEdgeAmount()){
+            allVerticesIds.forEach(v -> getAllEdgesIds());
+        } else {
+            Map<String, List<Set<String>>> edgeSetsMap = new HashMap<>();
+            for (String vertexId : allVerticesIds) {
+                List<Set<String>> initial = new ArrayList<>(Collections.nCopies(level, null));
+                initial.set(0, getEdgeSurrounding(vertexId));
+                edgeSetsMap.put(vertexId, initial);
+            }
+            for (String vertexId : allVerticesIds) {
+                computeEdgeSetsHelper(vertexId, new HashSet<>(), level, edgeSetsMap);
+            }
+            edgeSetsMap.forEach((key, value) -> result.put(key, value.get(level - 1)));
+        }
+        return result;
     }
 
-    public Set<Vertex> getNeighbours(Vertex vertex){
-        return getNeighbours(vertex.getId());
-    }
-
-    public Set<Vertex> getNeighboursThat(Predicate<Vertex> vertexPredicate, Vertex vertex){
-        return getNeighboursThat(vertexPredicate, vertex.getId());
-    }
-
-    public int degree(Vertex vertex){
-        return degree(vertex.getId());
+    private Set<String> computeEdgeSetsHelper(String current, Set<String> visitedVertices, int level, Map<String, List<Set<String>>> edgeBuffer) {
+        Set<String> edgeSet = new HashSet<>();
+        Set<String> neighbourIds = getNeighboursIds(current);
+        visitedVertices.add(current);
+        if (level == 1){
+            edgeSet.addAll(neighbourIds);
+            return edgeSet;
+        } else {
+            edgeSet.addAll(getEdgeSurrounding(current));
+            for (String neighbourId: neighbourIds){
+                if (!visitedVertices.contains(neighbourId)) {
+                    Set<String> computedNeighbourEdges = edgeBuffer.get(neighbourId).get(level - 2);
+                    if (edgeBuffer.containsKey(neighbourId) && computedNeighbourEdges != null) {
+                        edgeSet.addAll(computedNeighbourEdges);
+                    } else {
+                        edgeSet.addAll(computeReachSetsHelper(neighbourId, visitedVertices, level - 1, edgeBuffer));
+                    }
+                }
+            }
+            edgeBuffer.get(current).set(level - 1, edgeSet);
+            logger.debug("Setting {} level of {} to {}", level, current, edgeSet);
+            return edgeSet;
+        }
     }
 
 
@@ -247,7 +330,6 @@ public class GenericGraph {
         }
         return result;
     }
-
 
     private Set<String> computeReachSetsHelper(String current, Set<String> ignored, int level, Map<String, List<Set<String>>> reachSetsBuffer) {
         Set<String> reachSet = new HashSet<>();
