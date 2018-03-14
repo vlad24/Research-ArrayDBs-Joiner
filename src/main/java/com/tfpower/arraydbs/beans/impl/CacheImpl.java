@@ -21,7 +21,7 @@ public class CacheImpl<T> implements Cache<T> {
     private Set<CacheEntry<T>> cachedItems;
 
     @Autowired
-    public CacheImpl(@Value("${cache_capacity}") Integer capacity) {
+    public CacheImpl(@Value("${cache.capacity}") Integer capacity) {
         this.capacity = capacity;
         this.cachedItems = new HashSet<>(capacity);
         this.timer = new AtomicInteger(0);

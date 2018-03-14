@@ -1,5 +1,6 @@
 package com.tfpower.arraydbs.entity;
 
+import com.tfpower.arraydbs.util.Constants;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -14,9 +15,10 @@ public class TraverseHelper {
     public enum Status {
         UNTOUCHED,
         IN_PROGRESS,
-        DONE
+        DONE;
     }
 
+    private String graphName;
     private boolean finished;
     private Deque<Vertex> visitResult;
     private Deque<Vertex> visitBuffer;
@@ -27,7 +29,13 @@ public class TraverseHelper {
     private BiFunction<Integer, Vertex, Integer> accumulatorUpdater;
     private Integer accumulator;
 
+
+    public TraverseHelper(String graphName) {
+        this();
+        this.graphName = graphName;
+    }
     public TraverseHelper() {
+        this.graphName = Constants.EMPTY;
         this.finished = false;
         this.visitResult = new LinkedList<>();
         this.visitBuffer = new LinkedList<>();
@@ -151,6 +159,15 @@ public class TraverseHelper {
 
     public Map<String, Status> getVertexStatus() {
         return vertexStatus;
+    }
+
+
+    public String getGraphName() {
+        return graphName;
+    }
+
+    public void setGraphName(String graphName) {
+        this.graphName = graphName;
     }
 
     @Override

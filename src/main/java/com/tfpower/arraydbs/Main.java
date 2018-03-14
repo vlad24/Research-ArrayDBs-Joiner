@@ -2,7 +2,7 @@ package com.tfpower.arraydbs;
 
 import com.tfpower.arraydbs.beans.ArrayJoiner;
 import com.tfpower.arraydbs.beans.BiGraphProvider;
-import com.tfpower.arraydbs.beans.impl.ArrayJoinerCacheNaiveImpl;
+import com.tfpower.arraydbs.beans.impl.BGraphProviderByRandomImpl;
 import com.tfpower.arraydbs.config.AppConfig;
 import com.tfpower.arraydbs.entity.BiGraph;
 import com.tfpower.arraydbs.entity.JoinReport;
@@ -19,9 +19,10 @@ import java.util.List;
 public class Main {
 
     private final static Logger logger = LoggerFactory.getLogger(Main.class);
+
     public static void main(String[] args) {
         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
-        BiGraphProvider biGraphProvider = context.getBean(BiGraphProvider.class);
+        BiGraphProvider biGraphProvider = context.getBean(BGraphProviderByRandomImpl.class);
         List<BiGraph> testGraphs = biGraphProvider.getTestGraphs();
         ArrayJoiner arrayJoiner = context.getBean(ArrayJoiner.class);
         for (BiGraph testGraph : testGraphs) {

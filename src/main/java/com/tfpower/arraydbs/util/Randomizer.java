@@ -29,4 +29,8 @@ public class Randomizer {
     public static Integer randomPositiveSmallInt() {
         return randomIntBetween(1, MAX_SMALL_INT);
     }
+
+    public static boolean randomBoolean() {
+        return random.nextBoolean();
+    }
 }

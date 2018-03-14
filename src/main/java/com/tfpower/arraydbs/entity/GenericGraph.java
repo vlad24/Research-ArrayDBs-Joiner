@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import static com.tfpower.arraydbs.entity.TraverseHelper.Status.*;
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toSet;
 
 public class GenericGraph {
 
@@ -54,6 +54,14 @@ public class GenericGraph {
         boolean startKnown = vertices.stream().anyMatch(vertex -> vertex.getId().equals(edge.getStart()));
         boolean endKnown = vertices.stream().anyMatch(vertex -> vertex.getId().equals(edge.getEnd()));
         return startKnown && endKnown;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Optional<Vertex> getVertex(String id) {
@@ -385,4 +393,6 @@ public class GenericGraph {
                 " incidenceMap=" + incidenceMap + "\n" +
                 '}';
     }
+
+
 }

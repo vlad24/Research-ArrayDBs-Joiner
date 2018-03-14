@@ -2,9 +2,11 @@ package com.tfpower.arraydbs.beans.impl;
 
 import com.tfpower.arraydbs.beans.ArrayJoiner;
 import com.tfpower.arraydbs.beans.Cache;
-import com.tfpower.arraydbs.entity.*;
+import com.tfpower.arraydbs.entity.BiGraph;
+import com.tfpower.arraydbs.entity.JoinReport;
+import com.tfpower.arraydbs.entity.TraverseHelper;
+import com.tfpower.arraydbs.entity.Vertex;
 import com.tfpower.arraydbs.util.Pair;
-import com.tfpower.arraydbs.util.Randomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +32,7 @@ public class ArrayJoinerCacheNaiveImpl implements ArrayJoiner {
         Set<Vertex> smallestVertexSet = prioritize.getLeft();
         Set<Vertex> biggerVertexSet = prioritize.getRight();
         cache.clear();
-        TraverseHelper traverse = new TraverseHelper();
+        TraverseHelper traverse = new TraverseHelper(bGraph.getName());
         fillCache(smallestVertexSet, traverse);
         for (Vertex current : smallestVertexSet){
             Set<Vertex> neighbours = bGraph.getNeighbours(current);

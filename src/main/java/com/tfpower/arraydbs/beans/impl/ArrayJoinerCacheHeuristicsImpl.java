@@ -33,13 +33,14 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
 
     public JoinReport join(BiGraph bGraph) {
         final Set<String> allVertices = bGraph.getAllVerticesIds();
-        final TraverseHelper traverse = new TraverseHelper();
+        final TraverseHelper traverse = new TraverseHelper(bGraph.getName());
         traverse.markVertices(allVertices, UNTOUCHED);
         traverse.setAccumulatorUpdater((acc, vertex) -> acc + vertex.getWeight());
         Vertex currentVertex = pickFirstVertex(bGraph);
         int iterationNumber = 0;
         int processedEdges = 0;
         int edgesAmount = bGraph.getEdgeAmount();
+        cache.clear();
         do {
             iterationNumber++;
             logger.trace("Iteration: {}", iterationNumber);
