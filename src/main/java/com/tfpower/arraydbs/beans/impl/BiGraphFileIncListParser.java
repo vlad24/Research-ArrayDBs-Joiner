@@ -37,7 +37,7 @@ public class BiGraphFileIncListParser extends BiGraphParser {
     }
 
     @Override
-    protected boolean isConfigLine(String line) {
+    protected boolean isMetaInfoLine(String line) {
         return line.startsWith(CONFIG_PREFIX);
     }
 
@@ -47,15 +47,15 @@ public class BiGraphFileIncListParser extends BiGraphParser {
     }
 
     @Override
-    protected BiGraphParseConfig constructConfig(String configLine) throws ParseException {
-        BiGraphParseConfig config = new BiGraphParseConfig();
+    protected BiGraphParseMetaInfo parseMetaInfo(String configLine) throws ParseException {
+        BiGraphParseMetaInfo config = new BiGraphParseMetaInfo();
         config.setFirstClassPrefix(getSubstringMatchingRegex(FIRST_CLASS_PREFIX, configLine, "A"));
         config.setSecondClassPrefix(getSubstringMatchingRegex(SECOND_CLASS_PREFIX, configLine, "B"));
         return config;
     }
 
     @Override
-    protected void fillBiGraph(List<String> contents, BiGraphParseConfig config, final BiGraph biGraph) {
+    protected void fillBiGraph(List<String> contents, BiGraphParseMetaInfo metaInfo, final BiGraph biGraph) {
         String firstClassVerticesRaw = contents.get(0).trim();
         String secondClassVerticesRaw = contents.get(1).trim();
         Arrays.stream(firstClassVerticesRaw.split(ELEMENT_SEP_REGEXP)).forEach(p -> biGraph.addLeftVertex(parseVertex(p)));

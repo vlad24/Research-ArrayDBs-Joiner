@@ -25,47 +25,56 @@ public abstract class BiGraphParser {
     public BiGraphParser() {
     }
 
-    abstract protected BiGraphParseConfig constructConfig(String line) throws ParseException;
+    abstract protected BiGraphParseMetaInfo parseMetaInfo(String line) throws ParseException;
 
-    abstract protected boolean isConfigLine(String line);
+    abstract protected boolean isMetaInfoLine(String line);
 
     abstract protected boolean isLineToIgnore(String line);
 
-    abstract protected void fillBiGraph(List<String> contents, BiGraphParseConfig config, BiGraph biGraph);
+    abstract protected void fillBiGraph(List<String> contents, BiGraphParseMetaInfo config, BiGraph biGraph);
+
 
     public BiGraph buildFromFile(String fileName) throws IOException, ParseException {
-        BiGraph biGraph = new BiGraph();
         BufferedReader reader = new BufferedReader(new InputStreamReader(new ClassPathResource(fileName).getInputStream()));
         String line = null;
         int currentLine = 0;
         List<String> contents = new ArrayList<>();
-        BiGraphParseConfig config = null;
+        BiGraphParseMetaInfo config = null;
         try {
             while ((line = reader.readLine()) != null) {
-                if (isConfigLine(line)) {
-                    config = constructConfig(line);
+                if (isMetaInfoLine(line)) {
+                    config = parseMetaInfo(line);
                 } else if (!isLineToIgnore(line)) {
                     contents.add(line);
                 }
                 currentLine++;
             }
+            BiGraph biGraph = new BiGraph();
             fillBiGraph(contents, config, biGraph);
-        } catch (ParseException e){
+            return biGraph;
+        } catch (ParseException e) {
             logger.error("Error at line {} : {}", currentLine, e.getMessage());
             throw e;
         }
-        return biGraph;
     }
 
 
-    public static class BiGraphParseConfig {
+    public static class BiGraphParseMetaInfo {
         private String firstClassPrefix;
         private String secondClassPrefix;
         private Map<String, Object> additionalParams;
+        private String graphName;
+
 
         public String getSecondClassPrefix() {
             return secondClassPrefix;
         }
+
+
+        public String getGraphName() {
+            return graphName;
+        }
+
 
         public void setSecondClassPrefix(String secondClassPrefix) {
             this.secondClassPrefix = secondClassPrefix;
@@ -85,6 +94,11 @@ public abstract class BiGraphParser {
 
         public void setAdditionalParams(Map<String, Object> additionalParams) {
             this.additionalParams = additionalParams;
+        }
+
+
+        public void setGraphName(String graphName) {
+            this.graphName = graphName;
         }
     }
 

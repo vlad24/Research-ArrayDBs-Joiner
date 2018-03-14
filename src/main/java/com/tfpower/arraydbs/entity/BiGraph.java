@@ -18,6 +18,12 @@ public class BiGraph extends GenericGraph {
         leftVerticesIds = new HashSet<>();
     }
 
+    public BiGraph(String name){
+        super(name);
+        rightVerticesIds = new HashSet<>();
+        leftVerticesIds = new HashSet<>();
+    }
+
     public void addLeftVertex(Vertex vertex) {
         super.addVertex(vertex);
         leftVerticesIds.add(vertex.getId());

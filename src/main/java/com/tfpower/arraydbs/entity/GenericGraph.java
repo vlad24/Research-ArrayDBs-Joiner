@@ -13,13 +13,20 @@ public class GenericGraph {
 
     private final static Logger logger = LoggerFactory.getLogger(GenericGraph.class);
 
+    protected String name;
     protected Set<Vertex> vertices;
     protected Set<Edge> edges;
     protected Map<String, Vertex> vertexIndex;
     protected Map<String, Set<Edge>> incidenceMap;
 
 
+    public GenericGraph(String name) {
+        this();
+        this.name = name;
+    }
+
     public GenericGraph() {
+        name = this.getClass().getSimpleName() + "_" + this.hashCode();
         vertices = new HashSet<>();
         vertexIndex = new HashMap<>();
         incidenceMap = new HashMap<>();

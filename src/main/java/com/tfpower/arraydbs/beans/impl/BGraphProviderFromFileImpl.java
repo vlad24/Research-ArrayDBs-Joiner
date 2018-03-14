@@ -16,7 +16,7 @@ import java.util.List;
 @Component
 public class BGraphProviderFromFileImpl implements BiGraphProvider {
 
-    @Value("${inc_lists_graph_file_names}")
+    @Value("${graphs.from_inc_lists_files.names}")
     private String fileNames;
 
     @Autowired
