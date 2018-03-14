@@ -2,6 +2,7 @@ package com.tfpower.arraydbs;
 
 import com.tfpower.arraydbs.beans.ArrayJoiner;
 import com.tfpower.arraydbs.beans.BiGraphProvider;
+import com.tfpower.arraydbs.beans.impl.ArrayJoinerCacheNaiveImpl;
 import com.tfpower.arraydbs.config.AppConfig;
 import com.tfpower.arraydbs.entity.BiGraph;
 import com.tfpower.arraydbs.entity.JoinReport;

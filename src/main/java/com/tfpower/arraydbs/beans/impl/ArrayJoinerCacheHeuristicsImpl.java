@@ -48,7 +48,7 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
             traverse.accountVisit(currentVertex);
             traverse.pushToVisitResult(currentVertex);
             traverse.updateAccumulatorBy(currentVertex);
-            cache.load(currentVertex);
+            cache.loadOrFail(currentVertex);
             logger.debug("Cache has been updated by {}. Current: {}", currentVertex, cache);
             Set<Edge> edgesInCache = bGraph.getEdgesAround(currentVertex, cache.getAllValues());
             logger.debug("Processing edges that cache allows: {}", edgesInCache);

@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.ToLongFunction;
@@ -17,7 +18,8 @@ public interface Cache<T> {
         return Comparator.comparingLong((ToLongFunction<CacheEntry<Vertex>>) CacheEntry::getTime).reversed();
     }
 
-    CacheEntry<T> load(T newEntry);
+    CacheEntry<T> loadOrFail(T newEntry);
+    Optional<T> loadOrEvict(T newEntry, Comparator<CacheEntry<T>> weigher);
 
     boolean contains(T value);
 
@@ -30,6 +32,10 @@ public interface Cache<T> {
     T evict(Comparator<CacheEntry<T>> weigher);
 
     Set<T> evictAll(Predicate<CacheEntry<T>> predicate);
+
+    default Set<T> clear(){
+        return evictAll(e -> true);
+    }
 
     class CacheEntry<T> {
 

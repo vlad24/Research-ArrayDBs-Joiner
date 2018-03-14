@@ -32,7 +32,7 @@ public class ArrayJoinerCacheEulerImpl implements ArrayJoiner {
     public JoinReport join(BiGraph bGraph) {
         GenericGraph graph = augment(bGraph);
         TraverseHelper traverseHelper = new TraverseHelper();
-        buildCacheAwareEulerCycle(graph, traverseHelper);
+        buildEulerCycleUpdatingCache(graph, traverseHelper);
         return JoinReport.fromTraversal(traverseHelper);
     }
 
@@ -71,7 +71,7 @@ public class ArrayJoinerCacheEulerImpl implements ArrayJoiner {
     }
 
 
-    private void buildCacheAwareEulerCycle(GenericGraph graph, TraverseHelper traverse) {
+    private void buildEulerCycleUpdatingCache(GenericGraph graph, TraverseHelper traverse) {
         boolean graphIsValid = graph.getAllVertices().stream().allMatch(v -> graph.degree(v) % 2 == 0);
         if (!graphIsValid) {
             throw new IllegalArgumentException("Invalid graph passed to euler cycle path search method :" + graph);
@@ -92,12 +92,12 @@ public class ArrayJoinerCacheEulerImpl implements ArrayJoiner {
                 if (!cache.contains(current)) {
                     logger.debug("Trying to add {}", current);
                     if (cache.getCurrentSize() < cache.getCapacity()) {
-                        cache.load(current);
+                        cache.loadOrFail(current);
                         logger.debug("Loaded to free space!");
                     } else {
                         Vertex evicted = cache.evict(Cache.oldest());
                         logger.debug("Loaded instead of {}", evicted);
-                        cache.load(current);
+                        cache.loadOrFail(current);
                     }
                     traverse.accountVisit(current);
                     traverse.updateAccumulatorBy(current);
