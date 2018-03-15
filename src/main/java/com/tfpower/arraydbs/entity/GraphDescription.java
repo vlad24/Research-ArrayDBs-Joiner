@@ -73,8 +73,6 @@ public class GraphDescription implements CSVExportable{
     }
 
 
-
-
     @Override
     public List<String> csvHeaderElements() {
         return Stream.of(
@@ -100,4 +98,16 @@ public class GraphDescription implements CSVExportable{
         ).collect(toList());
     }
 
+
+    @Override
+    public String toString() {
+        return "GraphDescription{" +
+                "graphName='" + graphName + '\'' +
+                ", edgesAmount=" + edgesAmount +
+                ", verticesAmount=" + verticesAmount +
+                ", avgDegree=" + avgDegree +
+                ", maxDegree=" + maxDegree +
+                ", minDegree=" + minDegree +
+                '}';
+    }
 }

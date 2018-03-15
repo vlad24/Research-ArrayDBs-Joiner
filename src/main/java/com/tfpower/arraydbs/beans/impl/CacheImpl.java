@@ -28,11 +28,10 @@ public class CacheImpl<T> implements Cache<T> {
     }
 
     @Override
-    public CacheEntry<T> loadOrFail(T newEntry) {
+    public void loadOrFail(T newEntry) {
         CacheEntry<T> newCacheEntry = new CacheEntry<>(timer.getAndIncrement(), newEntry);
         if (cachedItems.size() < capacity) {
             cachedItems.add(newCacheEntry);
-            return newCacheEntry;
         } else {
             throw new IllegalStateException(this + " has no more space to store " + newEntry);
         }

@@ -37,6 +37,53 @@ public class ArrayJoinerCacheEulerImpl implements ArrayJoiner {
     }
 
 
+    private void buildEulerCycleUpdatingCache(GenericGraph graph, TraverseHelper traverse) {
+        boolean graphIsValid = graph.getAllVertices().stream().allMatch(v -> graph.degree(v) % 2 == 0);
+        if (!graphIsValid) {
+            throw new IllegalArgumentException("Invalid graph passed to euler cycle path search method :" + graph);
+        }
+        Vertex current = Randomizer.pickRandomFrom(graph.getAllVertices());
+        traverse.pushToVisitBuffer(current);
+        traverse.setAccumulatorUpdater((acc, v) -> acc + v.getWeight());
+        Set<Edge> alreadyVisitedEdges = new HashSet<>();
+        while (traverse.isNotFinished()) {
+            final Vertex examinedVertex = current;
+            Set<Vertex> reachableNeighbours = graph.getNeighboursThat(
+                    neighbor -> graph.getAllEdgesBetween(examinedVertex, neighbor).stream().anyMatch(neighborEdge -> traverse.statusOfEdge(neighborEdge) != DONE),
+                    current
+            );
+            if (reachableNeighbours.isEmpty()) {
+                logger.trace("Current is {}", current);
+                traverse.pushToVisitResult(current);     // push to circuit
+                if (!cache.contains(current)) {
+                    logger.trace("Trying to add {}", current);
+                    if (cache.getCurrentSize() < cache.getCapacity()) {
+                        cache.loadOrFail(current);
+                        logger.trace("Loaded to free space!");
+                    } else {
+                        Vertex evicted = cache.evict(Cache.oldest());
+                        logger.trace("Loaded instead of {}", evicted);
+                        cache.loadOrFail(current);
+                    }
+                    traverse.accountVisit(current);
+                    traverse.updateAccumulatorBy(current);
+                }
+                current = traverse.popFromVisitBuffer(); // reset the 'current' one
+            } else {
+                traverse.pushToVisitBuffer(current);
+                Vertex next = Randomizer.pickRandomFrom(reachableNeighbours);
+                Edge edgeToNext = Randomizer.pickRandomFrom(graph.getAllEdgesBetween(current, next).stream().filter(e -> traverse.statusOfEdge(e) != DONE).collect(toSet()));
+                traverse.markEdge(edgeToNext, DONE);
+                assert !alreadyVisitedEdges.contains(edgeToNext);
+                alreadyVisitedEdges.add(edgeToNext);
+                current = next;
+            }
+            traverse.finishIf(traverse.getVisitBuffer().isEmpty() && reachableNeighbours.isEmpty());
+        }
+        assert graph.getAllEdges().stream().map(traverse::statusOfEdge).allMatch(status -> status.equals(DONE));
+    }
+
+
     private GenericGraph augment(BiGraph biGraph) {
         GenericGraph resultGraph = biGraph.asGenericGraph();
         Set<Vertex> oddVertices = Stream.concat(biGraph.getLeftVertices().stream(), biGraph.getRightVertices().stream())
@@ -71,49 +118,6 @@ public class ArrayJoinerCacheEulerImpl implements ArrayJoiner {
     }
 
 
-    private void buildEulerCycleUpdatingCache(GenericGraph graph, TraverseHelper traverse) {
-        boolean graphIsValid = graph.getAllVertices().stream().allMatch(v -> graph.degree(v) % 2 == 0);
-        if (!graphIsValid) {
-            throw new IllegalArgumentException("Invalid graph passed to euler cycle path search method :" + graph);
-        }
-        Vertex current = Randomizer.pickRandomFrom(graph.getAllVertices());
-        traverse.pushToVisitBuffer(current);
-        traverse.setAccumulatorUpdater((acc, v) -> acc + v.getWeight());
-        while (traverse.isNotFinished()) {
-            final Vertex examinedVertex = current;
-            Set<Vertex> reachableNeighbours = graph.getNeighboursThat(
-                    neighbor -> graph.getAllEdgesBetween(neighbor, examinedVertex).stream()
-                            .anyMatch(neighborEdge -> traverse.statusOfEdge(neighborEdge) != DONE),
-                    current
-            );
-            if (reachableNeighbours.isEmpty()) {
-                logger.debug("Current is {}", current);
-                traverse.pushToVisitResult(current);     // push to circuit
-                if (!cache.contains(current)) {
-                    logger.debug("Trying to add {}", current);
-                    if (cache.getCurrentSize() < cache.getCapacity()) {
-                        cache.loadOrFail(current);
-                        logger.debug("Loaded to free space!");
-                    } else {
-                        Vertex evicted = cache.evict(Cache.oldest());
-                        logger.debug("Loaded instead of {}", evicted);
-                        cache.loadOrFail(current);
-                    }
-                    traverse.accountVisit(current);
-                    traverse.updateAccumulatorBy(current);
-                }
-                current = traverse.popFromVisitBuffer(); // reset the 'current' one
-            } else {
-                traverse.pushToVisitBuffer(current);
-                Vertex next = Randomizer.pickRandomFrom(reachableNeighbours);
-                Edge edgeToNext = Randomizer.pickRandomFrom(graph.getAllEdgesBetween(current, next));
-                traverse.markEdge(edgeToNext, DONE);
-                current = next;
-            }
-            traverse.finishIf(traverse.getVisitBuffer().isEmpty() && reachableNeighbours.isEmpty());
-        }
-        assert graph.getAllEdges().stream().map(traverse::statusOfEdge).allMatch(status -> status.equals(DONE));
-    }
 
     @Override
     public String toString() {

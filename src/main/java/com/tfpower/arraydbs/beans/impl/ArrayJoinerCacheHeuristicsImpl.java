@@ -45,7 +45,7 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
         do {
             iterationNumber++;
             logger.trace("Iteration: {}", iterationNumber);
-            logger.debug("Processing: {}", currentVertex);
+            logger.trace("Processing: {}", currentVertex);
             traverse.markVertex(currentVertex, DONE);
             traverse.accountVisit(currentVertex);
             traverse.pushToVisitResult(currentVertex);
@@ -53,26 +53,26 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
             cache.loadOrFail(currentVertex);
             logger.debug("Cache has been updated by {}. Current: {}", currentVertex, cache);
             Set<Edge> edgesInCache = bGraph.getEdgesAround(currentVertex, cache.getAllValues());
-            logger.debug("Processing edges that cache allows: {}", edgesInCache);
+            logger.trace("Processing edges that cache allows: {}", edgesInCache);
             edgesInCache.forEach(e -> traverse.markEdge(e, DONE));
-            logger.debug("Edge status: {}", traverse.getEdgeStatus());
-            logger.debug("Vertex status: {}", traverse.getVertexStatus());
-            logger.debug("Visit result: {}", traverse.getVisitResult());
+            logger.trace("Edge status:   {}", traverse.getEdgeStatus());
+            logger.trace("Vertex status: {}", traverse.getVertexStatus());
+            logger.trace("Visit result:  {}", traverse.getVisitResult());
             Optional<Vertex> nextVertex = pickNext(currentVertex, bGraph, traverse);
             if (nextVertex.isPresent()) {
-                logger.debug("Vertex {} will be visited next...", nextVertex);
+                logger.trace("Vertex {} will be visited next...", nextVertex);
                 if (cache.getAllValues().size() == cache.getCapacity()) {
                     Vertex evicted = cache.evict(
                             comparing((Cache.CacheEntry<Vertex> v) ->
                                     bGraph.areDirectlyConnected(v.getValue(), nextVertex.get()) ? 0 : 1)
                                     .thenComparing(vertex -> -degreeExcludingDone(bGraph, traverse, vertex.getValue()))
                     );
-                    logger.debug("Evicted {} to free up space for next vertex...", evicted);
+                    logger.trace("Evicted {} to free up space for next vertex...", evicted);
                 }
                 currentVertex = nextVertex.get();
                 traverse.finishIf(processedEdges == edgesAmount);
                 processedEdges = traverse.countEdgesMarked(DONE);
-                logger.debug("Edges left to process: {}", edgesAmount - processedEdges);
+                logger.trace("Edges left to process: {}", edgesAmount - processedEdges);
             } else {
                 traverse.finish();
             }
@@ -83,7 +83,6 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
 
 
     private Vertex pickFirstVertex(BiGraph biGraph) {
-//        return Randomizer.pickRandomFrom(vertices);
         return biGraph.getAllVerticesIds().stream()
                 .map(biGraph::getExistingVertex)
                 .min(Comparator.comparingInt((ToIntFunction<Vertex>) biGraph::degree)
@@ -95,9 +94,9 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
         Set<Vertex> anchorVertices = cache.getAllValues();
         assert anchorVertices.contains(current);
         Set<Vertex> candidateVertices = bGraph.getEdgeSurrounding(anchorVertices).stream()
-                .filter(e -> traverse.statusOfEdge(e) != DONE)  // remove all done edges
+                .filter(e -> traverse.statusOfEdge(e) != DONE)                                                         // remove all done edges
                 .map(e -> anchorVertices.contains(bGraph.getExistingVertex(e.getStart())) ? e.getEnd() : e.getStart()) // get only outer vertices
-                .map(bGraph::getExistingVertex) //map to vertex objects
+                .map(bGraph::getExistingVertex)                                                                        //map to vertex objects
                 .collect(toSet());
         return candidateVertices.stream()
                 .min(comparing(traverse::statusOfVertex)                                              // first pick untouched ones

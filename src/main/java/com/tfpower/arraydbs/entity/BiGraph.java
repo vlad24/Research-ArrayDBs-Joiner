@@ -1,6 +1,7 @@
 package com.tfpower.arraydbs.entity;
 
 import java.util.HashSet;
+import java.util.IntSummaryStatistics;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -77,5 +78,20 @@ public class BiGraph extends GenericGraph {
 
     public GenericGraph asGenericGraph() {
         return super.copy();
+    }
+
+
+    @Override
+    public GraphDescription description() {
+        BiGraphDescription biGraphDescription = new BiGraphDescription(super.description());
+        biGraphDescription.setLeftVerticesAmount(getLeftVertices().size());
+        biGraphDescription.setRightVerticesAmount(getRightVertices().size());
+        IntSummaryStatistics leftDegStats = getLeftVertices().stream().mapToInt(this::degree).summaryStatistics();
+        IntSummaryStatistics rightDegStats = getRightVertices().stream().mapToInt(this::degree).summaryStatistics();
+        biGraphDescription.setLeftAvgDegree(leftDegStats.getAverage());
+        biGraphDescription.setRightAvgDegree(rightDegStats.getAverage());
+        biGraphDescription.setLeftMaxDegree(leftDegStats.getMax());
+        biGraphDescription.setRightMaxDegree(rightDegStats.getMax());
+        return biGraphDescription;
     }
 }
