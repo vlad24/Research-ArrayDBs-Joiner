@@ -31,9 +31,9 @@ public class ArrayJoinerCacheEulerImpl implements ArrayJoiner {
 
     public JoinReport join(BiGraph bGraph) {
         GenericGraph graph = augment(bGraph);
-        TraverseHelper traverseHelper = new TraverseHelper();
-        buildEulerCycleUpdatingCache(graph, traverseHelper);
-        return JoinReport.fromTraversal(traverseHelper);
+        TraverseHelper traverse = new TraverseHelper();
+        buildEulerCycleUpdatingCache(graph, traverse);
+        return JoinReport.fromGraphTraversal(traverse, this.toString(), bGraph.description());
     }
 
 
@@ -113,5 +113,10 @@ public class ArrayJoinerCacheEulerImpl implements ArrayJoiner {
             traverse.finishIf(traverse.getVisitBuffer().isEmpty() && reachableNeighbours.isEmpty());
         }
         assert graph.getAllEdges().stream().map(traverse::statusOfEdge).allMatch(status -> status.equals(DONE));
+    }
+
+    @Override
+    public String toString() {
+        return "euler-joiner<" + cache.getCapacity() + ">";
     }
 }

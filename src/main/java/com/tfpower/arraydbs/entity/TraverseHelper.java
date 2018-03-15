@@ -18,7 +18,6 @@ public class TraverseHelper {
         DONE;
     }
 
-    private String graphName;
     private boolean finished;
     private Deque<Vertex> visitResult;
     private Deque<Vertex> visitBuffer;
@@ -30,12 +29,7 @@ public class TraverseHelper {
     private Integer accumulator;
 
 
-    public TraverseHelper(String graphName) {
-        this();
-        this.graphName = graphName;
-    }
     public TraverseHelper() {
-        this.graphName = Constants.EMPTY;
         this.finished = false;
         this.visitResult = new LinkedList<>();
         this.visitBuffer = new LinkedList<>();
@@ -161,14 +155,6 @@ public class TraverseHelper {
         return vertexStatus;
     }
 
-
-    public String getGraphName() {
-        return graphName;
-    }
-
-    public void setGraphName(String graphName) {
-        this.graphName = graphName;
-    }
 
     @Override
     public String toString() {

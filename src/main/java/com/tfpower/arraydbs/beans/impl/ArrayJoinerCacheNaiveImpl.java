@@ -32,7 +32,7 @@ public class ArrayJoinerCacheNaiveImpl implements ArrayJoiner {
         Set<Vertex> smallestVertexSet = prioritize.getLeft();
         Set<Vertex> biggerVertexSet = prioritize.getRight();
         cache.clear();
-        TraverseHelper traverse = new TraverseHelper(bGraph.getName());
+        TraverseHelper traverse = new TraverseHelper();
         fillCache(smallestVertexSet, traverse);
         for (Vertex current : smallestVertexSet){
             Set<Vertex> neighbours = bGraph.getNeighbours(current);
@@ -48,7 +48,7 @@ public class ArrayJoinerCacheNaiveImpl implements ArrayJoiner {
             }
         }
         assert bGraph.getAllEdges().stream().map(traverse::statusOfEdge).allMatch(status -> status.equals(DONE));
-        return JoinReport.fromTraversal(traverse);
+        return JoinReport.fromGraphTraversal(traverse, this.toString(), bGraph.description());
     }
 
 
@@ -78,6 +78,11 @@ public class ArrayJoinerCacheNaiveImpl implements ArrayJoiner {
         List<Set<Vertex>> sets = Arrays.asList(bGraph.getLeftVertices(), bGraph.getRightVertices());
         sets.sort(Comparator.comparingInt(Set::size));
         return new Pair<>(sets.get(0), sets.get(1));
+    }
+
+    @Override
+    public String toString() {
+        return "ArrayJoinerNaive with cache sized " + cache.getCapacity();
     }
 
 }

@@ -1,5 +1,6 @@
 package com.tfpower.arraydbs.beans.impl;
 
+import com.sun.corba.se.impl.orbutil.graph.Graph;
 import com.tfpower.arraydbs.beans.ArrayJoiner;
 import com.tfpower.arraydbs.beans.Cache;
 import com.tfpower.arraydbs.entity.*;
@@ -33,7 +34,7 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
 
     public JoinReport join(BiGraph bGraph) {
         final Set<String> allVertices = bGraph.getAllVerticesIds();
-        final TraverseHelper traverse = new TraverseHelper(bGraph.getName());
+        final TraverseHelper traverse = new TraverseHelper();
         traverse.markVertices(allVertices, UNTOUCHED);
         traverse.setAccumulatorUpdater((acc, vertex) -> acc + vertex.getWeight());
         Vertex currentVertex = pickFirstVertex(bGraph);
@@ -77,7 +78,7 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
             }
         }
         while (traverse.isNotFinished());
-        return JoinReport.fromTraversal(traverse);
+        return JoinReport.fromGraphTraversal(traverse, this.toString(), bGraph.description());
     }
 
 
@@ -114,4 +115,9 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
         return bGraph.degree(vertex) - neighborsByDoneEdges.size();
     }
 
+
+    @Override
+    public String toString() {
+        return "cacheHeuristic-joiner<" + cache.getCapacity() + ">";
+    }
 }

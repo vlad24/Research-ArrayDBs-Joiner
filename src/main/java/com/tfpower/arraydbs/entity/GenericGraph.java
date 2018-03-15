@@ -394,5 +394,9 @@ public class GenericGraph {
                 '}';
     }
 
+    public GraphDescription description(){
+        return new GraphDescription();
+    }
+
 
 }

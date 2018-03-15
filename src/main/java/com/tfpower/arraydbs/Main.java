@@ -2,6 +2,9 @@ package com.tfpower.arraydbs;
 
 import com.tfpower.arraydbs.beans.ArrayJoiner;
 import com.tfpower.arraydbs.beans.BiGraphProvider;
+import com.tfpower.arraydbs.beans.impl.ArrayJoinerCacheEulerImpl;
+import com.tfpower.arraydbs.beans.impl.ArrayJoinerCacheHeuristicsImpl;
+import com.tfpower.arraydbs.beans.impl.ArrayJoinerCacheNaiveImpl;
 import com.tfpower.arraydbs.beans.impl.BGraphProviderByRandomImpl;
 import com.tfpower.arraydbs.config.AppConfig;
 import com.tfpower.arraydbs.entity.BiGraph;
@@ -24,12 +27,15 @@ public class Main {
         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
         BiGraphProvider biGraphProvider = context.getBean(BGraphProviderByRandomImpl.class);
         List<BiGraph> testGraphs = biGraphProvider.getTestGraphs();
-        ArrayJoiner arrayJoiner = context.getBean(ArrayJoiner.class);
+        ArrayJoiner arrayJoinerBase  = context.getBean(ArrayJoinerCacheEulerImpl.class);
+        ArrayJoiner arrayJoinerRival = context.getBean(ArrayJoinerCacheHeuristicsImpl.class);
         for (BiGraph testGraph : testGraphs) {
-            JoinReport joinReport = arrayJoiner.join(testGraph);
-            logger.info("Join process is over: {}", joinReport);
-            logger.info("Load stats: {}", joinReport.getLoadFrequencies().values()
-                    .stream().mapToInt(Integer::intValue).summaryStatistics());
+            JoinReport joinReportBase  = arrayJoinerBase.join(testGraph);
+            JoinReport joinReportRival = arrayJoinerRival.join(testGraph);
+            logger.debug("Join base : {}", joinReportBase.toString());
+            logger.debug("Join rival: {}", joinReportRival.toString());
+            logger.info("Diff (csv) : {}", JoinReport.diff(joinReportBase, joinReportRival).toStringCsv(";"));
+
         }
     }
 
