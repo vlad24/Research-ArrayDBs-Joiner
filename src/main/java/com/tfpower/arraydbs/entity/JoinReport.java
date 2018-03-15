@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Created by vlad on 24.01.18.
@@ -78,29 +79,26 @@ public class JoinReport {
 
 
     public static JoinReportDiff diff(JoinReport joinReportBase, JoinReport joinReportRival) {
-        final int ratioScale = 2;
-        long baseCount = joinReportBase.loadFreqStats.getCount();
+        long baseCount = joinReportBase.loadFreqStats.getSum();
         int baseMin = joinReportBase.loadFreqStats.getMin();
         int baseMax = joinReportBase.loadFreqStats.getMax();
         int baseWeight = joinReportBase.getTotalWeight();
         double baseAvg = joinReportBase.loadFreqStats.getAverage();
-        double ratioCount  = (baseCount == 0)   ? Double.MAX_VALUE : (double) joinReportRival.loadFreqStats.getCount()   / baseCount;
+        double ratioCount  = (baseCount == 0)   ? Double.MAX_VALUE : (double) joinReportRival.loadFreqStats.getSum()   / baseCount;
         double ratioMin    = (baseMin == 0 )    ? Double.MAX_VALUE : (double) joinReportRival.loadFreqStats.getMin()     / baseMin;
         double ratioAvg    = (baseAvg == 0 )    ? Double.MAX_VALUE :          joinReportRival.loadFreqStats.getAverage() / baseAvg;
         double ratioMax    = (baseMax == 0 )    ? Double.MAX_VALUE : (double) joinReportRival.loadFreqStats.getMax()     / baseMax;
         double ratioWeight = (baseWeight == 0 ) ? Double.MAX_VALUE : (double) joinReportRival.getTotalWeight()           / baseWeight;
         return new JoinReportDiff(joinReportBase.getJoinerName(), joinReportRival.getJoinerName(),
                 baseCount, baseMin, baseAvg, baseMax, baseWeight,
-                new BigDecimal(ratioCount).setScale(ratioScale, BigDecimal.ROUND_HALF_UP),
-                new BigDecimal(ratioMin).setScale(ratioScale, BigDecimal.ROUND_HALF_UP),
-                new BigDecimal(ratioAvg).setScale(ratioScale, BigDecimal.ROUND_HALF_UP),
-                new BigDecimal(ratioMax).setScale(ratioScale, BigDecimal.ROUND_HALF_UP),
-                new BigDecimal(ratioWeight).setScale(ratioScale, BigDecimal.ROUND_HALF_UP)
+                ratioCount, ratioMin, ratioAvg, ratioMax, ratioWeight
         );
     }
 
 
-    public static class JoinReportDiff {
+    public static class JoinReportDiff implements CSVExportable {
+        static final int RATIO_SCALE = 2;
+
         private String baseJoinerName;
         private String rivalJoinerName;
         private Long baseLoadAmount;
@@ -117,7 +115,7 @@ public class JoinReport {
 
         JoinReportDiff(String baseJoinerName, String rivalJoinerName,
                        Long baseLoadAmount, Integer baseLoadMin, Double baseLoadAvg, Integer baseLoadMax, Integer baseLoadWeight,
-                       BigDecimal ratioLoadAmount, BigDecimal ratioMinLoad,  BigDecimal ratioAvgLoad, BigDecimal ratioMaxLoad, BigDecimal ratioWeight) {
+                       double ratioLoadAmount, double ratioMinLoad, double ratioAvgLoad, double ratioMaxLoad, double ratioWeight) {
             this.baseJoinerName = baseJoinerName;
             this.rivalJoinerName = rivalJoinerName;
             this.baseLoadAmount = baseLoadAmount;
@@ -125,11 +123,11 @@ public class JoinReport {
             this.baseLoadAvg = baseLoadAvg;
             this.baseLoadMax = baseLoadMax;
             this.baseLoadWeight = baseLoadWeight;
-            this.ratioLoadAmount = ratioLoadAmount;
-            this.ratioWeight = ratioWeight;
-            this.ratioMinLoad = ratioMinLoad;
-            this.ratioAvgLoad = ratioAvgLoad;
-            this.ratioMaxLoad = ratioMaxLoad;
+            this.ratioLoadAmount = new BigDecimal(ratioLoadAmount).setScale(JoinReportDiff.RATIO_SCALE, BigDecimal.ROUND_HALF_UP);
+            this.ratioWeight = new BigDecimal(ratioWeight).setScale(JoinReportDiff.RATIO_SCALE, BigDecimal.ROUND_HALF_UP);
+            this.ratioMinLoad = new BigDecimal(ratioMinLoad).setScale(JoinReportDiff.RATIO_SCALE, BigDecimal.ROUND_HALF_UP);
+            this.ratioAvgLoad = new BigDecimal(ratioAvgLoad).setScale(JoinReportDiff.RATIO_SCALE, BigDecimal.ROUND_HALF_UP);
+            this.ratioMaxLoad = new BigDecimal(ratioMaxLoad).setScale(JoinReportDiff.RATIO_SCALE, BigDecimal.ROUND_HALF_UP);
         }
 
 
@@ -192,7 +190,9 @@ public class JoinReport {
             return ratioMaxLoad;
         }
 
-        public String toStringCsv(String separator){
+
+        @Override
+        public List<String> csvElements() {
             return Stream.of(
                     baseJoinerName,
                     rivalJoinerName,
@@ -206,7 +206,26 @@ public class JoinReport {
                     ratioAvgLoad.toString(),
                     ratioMaxLoad.toString(),
                     ratioWeight.toString()
-            ).collect(joining(separator));
+            ).collect(toList());
+        }
+
+
+        @Override
+        public List<String> csvHeaderElements() {
+            return Stream.of(
+                    "baseJoinerName",
+                    "rivalJoinerName",
+                    "baseLoadAmount",
+                    "baseLoadMin",
+                    "baseLoadAvg",
+                    "baseLoadMax",
+                    "baseLoadWeight",
+                    "ratioLoadAmount",
+                    "ratioMinLoad",
+                    "ratioAvgLoad",
+                    "ratioMaxLoad",
+                    "ratioWeight"
+            ).collect(toList());
         }
 
     }

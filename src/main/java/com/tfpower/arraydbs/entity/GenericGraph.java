@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import static com.tfpower.arraydbs.entity.TraverseHelper.Status.*;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 public class GenericGraph {
@@ -385,6 +386,17 @@ public class GenericGraph {
         return cloneGraph;
     }
 
+    public GraphDescription description(){
+        GraphDescription graphDescription = new GraphDescription(getName());
+        graphDescription.setEdgesAmount(getEdgeAmount());
+        graphDescription.setVerticesAmount(getVertexAmount());
+        IntSummaryStatistics degreeStatistics = this.getAllVertices().stream().mapToInt(this::degree).summaryStatistics();
+        graphDescription.setAvgDegree(degreeStatistics.getAverage());
+        graphDescription.setMaxDegree(degreeStatistics.getMax());
+        graphDescription.setMinDegree(degreeStatistics.getMin());
+        return graphDescription;
+    }
+
     @Override
     public String toString() {
         return "GenericGraph{" + "\n\t" +
@@ -393,10 +405,5 @@ public class GenericGraph {
                 " incidenceMap=" + incidenceMap + "\n" +
                 '}';
     }
-
-    public GraphDescription description(){
-        return new GraphDescription();
-    }
-
 
 }

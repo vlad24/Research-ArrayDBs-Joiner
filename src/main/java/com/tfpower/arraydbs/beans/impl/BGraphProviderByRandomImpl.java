@@ -36,7 +36,7 @@ public class BGraphProviderByRandomImpl implements BiGraphProvider {
     private Integer rightSetCapacity;
 
     @Value("${graphs.random.min_edge_gen_attempts:100}")
-    private Integer minEdgesGenerateAttempts;
+    private Integer edgesGenerateAttempts;
 
 
     @Override
@@ -51,12 +51,13 @@ public class BGraphProviderByRandomImpl implements BiGraphProvider {
             IntStream.range(1, 1 + rightSetCapacity)
                     .mapToObj(j -> new Vertex(RIGHT_PREFIX + j, Constants.EMPTY, Randomizer.randomPositiveSmallInt()))
                     .forEach(graph::addRightVertex);
-            Set<Set<String>> edgesNibs = new HashSet<>(minEdgesGenerateAttempts);
-            Set<String> connectedVertices = new HashSet<>();
+            Set<Set<String>> edgesNibs = new HashSet<>(edgesGenerateAttempts);
+            Set<String> connectedLeftVertices = new HashSet<>();
+            Set<String> connectedRightVertices = new HashSet<>();
             boolean resumeFromLeft = true;
             String vertexToResumeFrom = Randomizer.pickRandomFrom(graph.getLeftVertices()).getId();
             int edgeGenAttempts = 0;
-            while (edgeGenAttempts < minEdgesGenerateAttempts || connectedVertices.size() < graph.getVertexAmount()) {
+            while (edgeGenAttempts < edgesGenerateAttempts) {
                 String currentLeft = LEFT_PREFIX + Randomizer.randomIntBetween(1, leftSetCapacity);
                 String currentRight = RIGHT_PREFIX + Randomizer.randomIntBetween(1, rightSetCapacity);
                 if (resumeFromLeft){
@@ -72,10 +73,23 @@ public class BGraphProviderByRandomImpl implements BiGraphProvider {
                 }
                 resumeFromLeft = Randomizer.randomBoolean();
                 vertexToResumeFrom = resumeFromLeft ? currentLeft : currentRight;
-                connectedVertices.add(vertexToResumeFrom);
+                if (resumeFromLeft) {
+                    connectedLeftVertices.add(vertexToResumeFrom);
+                } else {
+                    connectedRightVertices.add(vertexToResumeFrom);
+                }
                 edgeGenAttempts++;
             }
-
+            Set<String> notConnectedVerticesLeft = new HashSet<>(graph.getAllVerticesIds());
+            Set<String> notConnectedVerticesRight = new HashSet<>(graph.getAllVerticesIds());
+            notConnectedVerticesLeft.removeAll(connectedLeftVertices);
+            notConnectedVerticesRight.removeAll(connectedRightVertices);
+            for (String notConnectedVertexId : notConnectedVerticesLeft) {
+                graph.addEdge(new Edge(notConnectedVertexId, Randomizer.pickRandomFrom(connectedRightVertices), Randomizer.randomPositiveSmallInt()));
+            }
+            for (String notConnectedVertexId : notConnectedVerticesRight) {
+                graph.addEdge(new Edge(Randomizer.pickRandomFrom(connectedLeftVertices), notConnectedVertexId, Randomizer.randomPositiveSmallInt()));
+            }
             graphList.add(graph);
         }
         return graphList;
