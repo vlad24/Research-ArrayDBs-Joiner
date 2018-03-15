@@ -33,21 +33,21 @@ public class ArrayJoinerCacheNaiveImpl implements ArrayJoiner {
         Set<Vertex> biggerVertexSet = prioritize.getRight();
         cache.clear();
         TraverseHelper traverse = new TraverseHelper();
+        traverse.setAccumulatorUpdater((acc, vertex) -> acc + vertex.getWeight());
         fillCache(smallestVertexSet, traverse);
         for (Vertex current : smallestVertexSet){
             Set<Vertex> neighbours = bGraph.getNeighbours(current);
             for (Vertex neighbour : neighbours){
                 if (!cache.contains(neighbour)){
-                    Optional<Vertex> evicted = cache.loadOrEvict(neighbour, Cache.oldest());
+                    Optional<Vertex> evicted = cache.loadOrEvict(neighbour, Cache.youngest());
                     assert !evicted.isPresent() || biggerVertexSet.contains(evicted.get());
-                } else {
-                    traverse.accountVisit(neighbour);
                     traverse.pushToVisitResult(neighbour);
+                    traverse.accountVisit(neighbour);
                 }
                 traverse.markEdge(bGraph.getExistingEdge(current, neighbour), DONE);
             }
         }
-        assert bGraph.getAllEdges().stream().map(traverse::statusOfEdge).allMatch(status -> status.equals(DONE));
+        assert bGraph.getAllEdges().stream().map(traverse::statusOfEdge).allMatch(status -> status.equals(DONE)) : "Not all edges are processed";
         return JoinReport.fromGraphTraversal(traverse, this.toString(), bGraph.description());
     }
 
@@ -82,7 +82,7 @@ public class ArrayJoinerCacheNaiveImpl implements ArrayJoiner {
 
     @Override
     public String toString() {
-        return "ArrayJoinerNaive with cache sized " + cache.getCapacity();
+        return "naive-joiner<" + cache.getCapacity() + ">";
     }
 
 }

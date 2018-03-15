@@ -30,12 +30,11 @@ public class Main {
         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
         BiGraphProvider biGraphProvider = context.getBean(BGraphProviderByRandomImpl.class);
         List<BiGraph> testGraphs = biGraphProvider.getTestGraphs();
-        ArrayJoiner arrayJoinerBase  = context.getBean(ArrayJoinerCacheEulerImpl.class);
         ArrayJoiner arrayJoinerRival = context.getBean(ArrayJoinerCacheHeuristicsImpl.class);
+        ArrayJoiner arrayJoinerBase  = context.getBean(ArrayJoinerCacheEulerImpl.class);
         List<String> csvResult = new ArrayList<>(1 + testGraphs.size());
         boolean csvHeaderFormed = false;
         for (BiGraph testGraph : testGraphs) {
-            logger.info("Joining {}", testGraph.getName());
             JoinReport joinReportBase  = arrayJoinerBase.join(testGraph);
             JoinReport joinReportRival = arrayJoinerRival.join(testGraph);
             JoinReport.JoinReportDiff joinDiff = JoinReport.diff(joinReportBase, joinReportRival);
@@ -47,7 +46,8 @@ public class Main {
             logger.debug("Join base : {}", joinReportBase.toString());
             logger.debug("Join rival: {}", joinReportRival.toString());
         }
-        logger.info("Program is over. CSV diffs: \n{}", csvResult.stream().collect(joining("\n")));
+
+        logger.info("Program is over. CSV diffs:\n\n{}", csvResult.stream().collect(joining("\n")));
     }
 
 }

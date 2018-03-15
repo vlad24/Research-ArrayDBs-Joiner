@@ -16,7 +16,7 @@ import static java.util.stream.Collectors.toList;
  */
 public class JoinReport {
     private String joinerName;
-    private GraphDescription graphName;
+    private GraphDescription graphDescription;
     private List<String> traverseSequence;
     private Map<String, Integer> loadFrequencies;
     private Integer totalWeight;
@@ -25,7 +25,7 @@ public class JoinReport {
 
     public JoinReport(String joinerName, GraphDescription graphDescription, List<String> traverseSequence, Map<String, Integer> loadFrequencies, Integer totalWeight) {
         this.joinerName = joinerName;
-        this.graphName = graphDescription;
+        this.graphDescription = graphDescription;
         this.traverseSequence = traverseSequence;
         this.loadFrequencies = loadFrequencies;
         this.totalWeight = totalWeight;
@@ -55,12 +55,12 @@ public class JoinReport {
     public String toString() {
 
         return "JoinReport{\n\t" +
-                    "'joinedBy':"         + joinerName       + ",\n\t" +
-                    "'graphName':"        + graphName        + ",\n\t" +
-                    "'totalWeight':"      + totalWeight      + "\n\t" +
-                    "'traverseSequence':" + traverseSequence + ",\n\t" +
-                    "'loadFrequencies':"  + loadFrequencies  + ",\n\t" +
-                    "'loadFreqStats':"    + loadFreqStats    + "\n\t" +
+                    "'joinedBy':"         + joinerName                  + ",\n\t" +
+                    "'graphDescription':" + graphDescription.toString() + ",\n\t" +
+                    "'totalWeight':"      + totalWeight                 + "\n\t" +
+                    "'traverseSequence':" + traverseSequence            + ",\n\t" +
+                    "'loadFrequencies':"  + loadFrequencies             + ",\n\t" +
+                    "'loadFreqStats':"    + loadFreqStats               + "\n\t" +
                 '}';
     }
 

@@ -5,10 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -28,11 +25,10 @@ public class CacheImpl<T> implements Cache<T> {
     }
 
     @Override
-    public CacheEntry<T> loadOrFail(T newEntry) {
+    public void loadOrFail(T newEntry) {
         CacheEntry<T> newCacheEntry = new CacheEntry<>(timer.getAndIncrement(), newEntry);
         if (cachedItems.size() < capacity) {
             cachedItems.add(newCacheEntry);
-            return newCacheEntry;
         } else {
             throw new IllegalStateException(this + " has no more space to store " + newEntry);
         }
@@ -89,6 +85,8 @@ public class CacheImpl<T> implements Cache<T> {
 
     @Override
     public String toString() {
-        return "Cache<" + getCurrentSize() + "/" + capacity + "> " + getAllValues();
+        List<T> cacheValues = new ArrayList<>(getAllValues());
+        cacheValues.sort(Comparator.comparing(Object::toString));
+        return "Cache<" + getCurrentSize() + "/" + capacity + "> " + cacheValues;
     }
 }

@@ -18,7 +18,12 @@ public interface Cache<T> {
         return Comparator.comparingLong((ToLongFunction<CacheEntry<Vertex>>) CacheEntry::getTime).reversed();
     }
 
-    CacheEntry<T> loadOrFail(T newEntry);
+    static Comparator<CacheEntry<Vertex>> youngest() {
+        return oldest().reversed();
+    }
+
+    void loadOrFail(T newEntry);
+
     Optional<T> loadOrEvict(T newEntry, Comparator<CacheEntry<T>> weigher);
 
     boolean contains(T value);
@@ -38,14 +43,11 @@ public interface Cache<T> {
     }
 
     class CacheEntry<T> {
-
         long time;
-
         T value;
 
         public CacheEntry(long time, T value) {
             this.time = time;
-
             this.value = value;
         }
 
