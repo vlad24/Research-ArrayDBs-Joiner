@@ -1,7 +1,7 @@
-@ firstClassPrefix=Q; secondClassPrefix=W;
-A1_3  A2_2  A3_2
-B1_1  B2_3  B3_1  B4_2
+@ firstClassPrefix=L; secondClassPrefix=R;
+A1_1  A2_1  A3_1
+B1_1  B2_1  B3_1  B4_1  B5_1
 
-A1 -> B1 B2 B4
-A2 -> B2 B3
-A3 -> B2 B4
+A1 -> B1
+A2 -> B1 B2 B3 B4 B5
+A3 -> B2 B5

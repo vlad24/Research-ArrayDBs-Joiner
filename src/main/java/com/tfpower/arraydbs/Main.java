@@ -1,12 +1,11 @@
 package com.tfpower.arraydbs;
 
-import ch.qos.logback.core.util.FileUtil;
 import com.tfpower.arraydbs.beans.ArrayJoiner;
 import com.tfpower.arraydbs.beans.BiGraphProvider;
 import com.tfpower.arraydbs.beans.impl.ArrayJoinerCacheEulerImpl;
 import com.tfpower.arraydbs.beans.impl.ArrayJoinerCacheHeuristicsImpl;
-import com.tfpower.arraydbs.beans.impl.ArrayJoinerCacheNaiveImpl;
 import com.tfpower.arraydbs.beans.impl.BGraphProviderByRandomImpl;
+import com.tfpower.arraydbs.beans.impl.BGraphProviderFromFileImpl;
 import com.tfpower.arraydbs.config.AppConfig;
 import com.tfpower.arraydbs.entity.BiGraph;
 import com.tfpower.arraydbs.entity.JoinReport;
@@ -15,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.util.FileSystemUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +29,7 @@ public class Main {
 
     public static void main(String[] args) {
         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
-        BiGraphProvider biGraphProvider = context.getBean(BGraphProviderByRandomImpl.class);
+        BiGraphProvider biGraphProvider = context.getBean(BGraphProviderFromFileImpl.class);
         List<BiGraph> testGraphs = biGraphProvider.getTestGraphs();
         ArrayJoiner arrayJoinerRival = context.getBean(ArrayJoinerCacheHeuristicsImpl.class);
         ArrayJoiner arrayJoinerBase  = context.getBean(ArrayJoinerCacheEulerImpl.class);
