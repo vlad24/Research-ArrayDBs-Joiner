@@ -42,36 +42,43 @@ public class TraverseHelper {
         accumulatorUpdater = (acc, v) -> acc;
     }
 
-
     public void pushToVisitBuffer(Vertex vertex) {
+        failIfFinished();
         visitBuffer.addLast(vertex);
     }
 
     public Vertex popFromVisitBuffer() {
+        failIfFinished();
         return visitBuffer.removeLast();
     }
 
     public void pushToVisitResult(Vertex vertex) {
+        failIfFinished();
         visitResult.addLast(vertex);
     }
 
     public Vertex popFromVisitResult() {
+        failIfFinished();
         return visitResult.removeLast();
     }
 
     public void accountVertexVisit(Vertex vertex) {
+        failIfFinished();
         vertexVisitCount.merge(vertex.getId(), 1, Integer::sum);
     }
 
     public void accountEdgeVisit(Edge edge) {
+        failIfFinished();
         edgeVisitCount.merge(edge.getId(), 1, Integer::sum);
     }
 
     public void markVertex(Vertex vertex, Status status) {
+        failIfFinished();
         markVertex(vertex.getId(), status);
     }
 
     public void markVertex(String vertexId, Status newStatus) {
+        failIfFinished();
         Status oldStatus = vertexStatus.get(vertexId);
         if (oldStatus != newStatus) {
             statusVertices.getOrDefault(oldStatus, emptySet()).remove(vertexId);
@@ -85,10 +92,12 @@ public class TraverseHelper {
     }
 
     public void markEdge(String edgeId, Status progress) {
+        failIfFinished();
         edgeStatus.put(edgeId, progress);
     }
 
     public void markEdge(Edge edge, Status progress) {
+        failIfFinished();
         markEdge(edge.getId(), progress);
     }
 
@@ -145,11 +154,19 @@ public class TraverseHelper {
     }
 
     public void setAccumulatorUpdater(BiFunction<Integer, Vertex, Integer> accumulatorUpdater) {
+        failIfFinished();
         this.accumulatorUpdater = accumulatorUpdater;
     }
 
     public void updateAccumulatorBy(Vertex vertex) {
+        failIfFinished();
         accumulator = accumulatorUpdater.apply(accumulator, vertex);
+    }
+
+    private void failIfFinished() {
+        if (finished){
+            throw new IllegalStateException("Traverse is already finished : could not modify results. Traverse: " + toString());
+        }
     }
 
     public Integer getAccumulator() {

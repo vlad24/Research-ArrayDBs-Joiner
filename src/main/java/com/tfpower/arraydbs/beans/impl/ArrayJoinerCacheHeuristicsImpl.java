@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.ToIntFunction;
@@ -51,7 +52,7 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
             traverse.pushToVisitResult(currentVertex);
             traverse.updateAccumulatorBy(currentVertex);
             cache.loadOrFail(currentVertex);
-            logger.debug("Cache has been updated by {}.\tCurrent: {}", currentVertex, cache);
+            logger.trace("Cache has been updated by {}.\tCurrent: {}", currentVertex, cache);
             Set<Edge> edgesInCache = bGraph.getEdgesAround(currentVertex, cache.getAllValues());
             logger.trace("Processing edges that cache allows: {}", edgesInCache);
             edgesInCache.forEach(e -> traverse.markEdge(e, DONE));
@@ -70,15 +71,18 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
                     logger.trace("Evicted {} to free up space for next vertex...", evicted);
                 }
                 currentVertex = nextVertex.get();
-                processedEdges = traverse.countEdgesMarked(DONE);
                 traverse.finishIf(processedEdges == edgesAmount);
+                processedEdges = traverse.countEdgesMarked(DONE);
                 logger.trace("Edges left to process: {}", edgesAmount - processedEdges);
             } else {
+                logger.trace("Finishing as there are no more next vertices");
                 traverse.finish();
             }
         }
         while (traverse.isNotFinished());
-        assert bGraph.getAllEdges().stream().allMatch(e -> traverse.statusOfEdge(e) == DONE);
+
+        Set<Edge> b = bGraph.getAllEdges().stream().filter(e -> traverse.statusOfEdge(e) != DONE).collect(toSet());
+        assert b.size() == 0 : "Not all edges were processed : " + b;
         return JoinReport.fromGraphTraversal(traverse, this.toString(), bGraph.description());
     }
 
@@ -93,12 +97,22 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
 
     private Optional<Vertex> pickNext(Vertex current, BiGraph bGraph, TraverseHelper traverse) {
         Set<Vertex> anchorVertices = cache.getAllValues();
-        assert anchorVertices.contains(current);
+        assert anchorVertices.contains(current) : "Cache does not contain current vertex";
         Set<Vertex> candidateVertices = bGraph.getEdgeSurrounding(anchorVertices).stream()
                 .filter(e -> traverse.statusOfEdge(e) != DONE)                                                         // remove all done edges
                 .map(e -> anchorVertices.contains(bGraph.getExistingVertex(e.getStart())) ? e.getEnd() : e.getStart()) // get only outer vertices
                 .map(bGraph::getExistingVertex)                                                                        //map to vertex objects
                 .collect(toSet());
+        if (candidateVertices.isEmpty() && traverse.countEdgesMarked(DONE) != bGraph.getEdgeAmount()){
+            candidateVertices = bGraph.getAllEdges().stream()
+                    .filter(edge -> traverse.statusOfEdge(edge) != DONE)
+                    .map(Edge::nibs)
+                    .reduce(new HashSet<>(), (accSet, nibs) -> {
+                        accSet.addAll(nibs);
+                        return accSet;
+                    })
+                    .stream().map(bGraph::getExistingVertex).collect(toSet());
+        }
         return candidateVertices.stream()
                 .min(comparing(traverse::statusOfVertex)                                              // first pick untouched ones
                         .thenComparing(neighbour -> degreeExcludingDone(bGraph, traverse, neighbour)) // then min by done-degree

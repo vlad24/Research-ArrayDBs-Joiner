@@ -11,12 +11,15 @@ public class Randomizer {
 
     private final static Logger logger = LoggerFactory.getLogger(Randomizer.class);
 
-    public static final int MAX_SMALL_INT = 20;
-    private static final long SEED = 1521233913850L;
-//            System.currentTimeMillis();
+    private static final int MAX_SMALL_INT = 20;
+    private static final long SEED =
+            System.currentTimeMillis()
+//            1521280451871L
+            ;
+
 
     static {
-        logger.info("Initialized randomizer with seed = {}", SEED);
+        logger.info("Randomizer initialized with seed = {}", SEED);
     }
 
     private static Random random = new Random(SEED);

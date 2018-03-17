@@ -5,6 +5,8 @@ import java.util.IntSummaryStatistics;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.joining;
+
 /**
  * Created by vlad on 21.02.18.
  */
@@ -93,5 +95,19 @@ public class BiGraph extends GenericGraph {
         biGraphDescription.setLeftMaxDegree(leftDegStats.getMax());
         biGraphDescription.setRightMaxDegree(rightDegStats.getMax());
         return biGraphDescription;
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder()
+                .append("----------------------").append(getName()).append("-------------\n")
+                .append(leftVerticesIds.stream().map(lId -> getExistingVertex(lId).toString()).collect(joining(" "))).append("\n")
+                .append(rightVerticesIds.stream().map(rId -> getExistingVertex(rId).toString()).collect(joining(" "))).append("\n")
+                .append(leftVerticesIds.stream().map(leftId ->
+                            leftId + "->" + getNeighbours(leftId).stream().map(Vertex::getId).sorted().collect(joining("\t")))
+                        .collect(joining("\n"))
+                )
+                .append("\n----------------------------------------------------------------")
+                .toString();
     }
 }

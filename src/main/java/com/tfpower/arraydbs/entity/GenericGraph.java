@@ -202,11 +202,8 @@ public class GenericGraph {
     public Set<Edge> getEdgesAround(Vertex anchorVertex, Set<Vertex> surroundingVertices) {
         Set<Edge> set = new HashSet<>();
         for (Vertex v : surroundingVertices) {
-            Optional<Edge> edgeBetween = getSingleEdgeBetween(anchorVertex, v);
-            if (edgeBetween.isPresent()) {
-                Edge edge = edgeBetween.get();
-                set.add(edge);
-            }
+            Set<Edge> incidentEdges = getAllEdgesBetween(anchorVertex, v);
+            set.addAll(incidentEdges);
         }
         return set;
     }

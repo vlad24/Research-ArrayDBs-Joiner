@@ -1,6 +1,5 @@
 package com.tfpower.arraydbs.beans;
 
-import com.tfpower.arraydbs.entity.Vertex;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -14,12 +13,24 @@ import java.util.function.ToLongFunction;
 @Scope("prototype")
 public interface Cache<T> {
 
-    static Comparator<CacheEntry<Vertex>> oldest() {
-        return Comparator.comparingLong((ToLongFunction<CacheEntry<Vertex>>) CacheEntry::getTime).reversed();
+    static <T> Comparator<CacheEntry<T>> anyExceptFor(T value) {
+        return (o1, o2) -> {
+            if (o1.getValue().equals(value) && !o2.getValue().equals(value)) {
+                return -1;
+            } else if (!o1.getValue().equals(value) && o2.getValue().equals(value)) {
+                return 1;
+            } else {
+                return 0;
+            }
+        };
     }
 
-    static Comparator<CacheEntry<Vertex>> youngest() {
-        return oldest().reversed();
+    static <T> Comparator<CacheEntry<T>> byAge() {
+        return Comparator.comparingLong((ToLongFunction<CacheEntry<T>>) CacheEntry::getTime).reversed();
+    }
+
+    static <T> Comparator<CacheEntry<T>> byFreshness() {
+        return Comparator.comparingLong(CacheEntry::getTime);
     }
 
     void loadOrFail(T newEntry);

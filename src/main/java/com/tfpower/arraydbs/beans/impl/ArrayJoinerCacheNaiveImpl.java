@@ -39,7 +39,7 @@ public class ArrayJoinerCacheNaiveImpl implements ArrayJoiner {
             Set<Vertex> neighbours = bGraph.getNeighbours(current);
             for (Vertex neighbour : neighbours){
                 if (!cache.contains(neighbour)){
-                    Optional<Vertex> evicted = cache.loadOrEvict(neighbour, Cache.youngest());
+                    Optional<Vertex> evicted = cache.loadOrEvict(neighbour, Cache.byFreshness());
                     assert !evicted.isPresent() || biggerVertexSet.contains(evicted.get());
                     traverse.pushToVisitResult(neighbour);
                     traverse.accountVertexVisit(neighbour);

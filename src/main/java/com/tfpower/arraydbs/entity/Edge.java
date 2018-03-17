@@ -4,6 +4,9 @@ import com.tfpower.arraydbs.util.Constants;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.joining;
 
 /**
  * Created by vlad on 21.02.18.
@@ -84,12 +87,9 @@ public class Edge {
 
     @Override
     public String toString() {
-        return new StringBuilder()
-                .append(start)
-                .append("<--").append(weight).append("-->")
-                .append(end)
-                .append((mark != null && mark.equals(Constants.EMPTY)) ?  "" : "(" + mark + ")")
-                .toString();
+        return Stream.of(start, end).sorted().collect(joining("<-->"))
+                +
+                ((mark != null && !mark.equals(Constants.EMPTY)) ?  "(" + mark + ")" : Constants.EMPTY);
     }
 
 

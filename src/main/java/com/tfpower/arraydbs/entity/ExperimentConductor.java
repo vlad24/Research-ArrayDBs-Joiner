@@ -19,6 +19,7 @@ public class ExperimentConductor {
         boolean csvHeaderFormed = false;
         for (ArrayJoiner rivalJoiner : rivalJoiners) {
             for (BiGraph testGraph : testGraphs) {
+                logger.debug("Graph :\n{}", testGraph.toString());
                 JoinReport joinReportBase = baseJoiner.join(testGraph);
                 JoinReport joinReportRival = rivalJoiner.join(testGraph);
                 JoinReport.JoinReportDiff joinDiff = JoinReport.diff(joinReportBase, joinReportRival);
