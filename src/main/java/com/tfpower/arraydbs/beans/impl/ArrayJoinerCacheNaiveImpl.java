@@ -42,7 +42,8 @@ public class ArrayJoinerCacheNaiveImpl implements ArrayJoiner {
                     Optional<Vertex> evicted = cache.loadOrEvict(neighbour, Cache.youngest());
                     assert !evicted.isPresent() || biggerVertexSet.contains(evicted.get());
                     traverse.pushToVisitResult(neighbour);
-                    traverse.accountVisit(neighbour);
+                    traverse.accountVertexVisit(neighbour);
+                    traverse.updateAccumulatorBy(neighbour);
                 }
                 traverse.markEdge(bGraph.getExistingEdge(current, neighbour), DONE);
             }
@@ -59,7 +60,7 @@ public class ArrayJoinerCacheNaiveImpl implements ArrayJoiner {
             for (Vertex vertex : smallestVertexSet){
                 cache.loadOrFail(vertex);
                 traverse.pushToVisitResult(vertex);
-                traverse.accountVisit(vertex);
+                traverse.accountVertexVisit(vertex);
             }
         } else {
             // load only part of it leaving space for one more from another operand
@@ -68,7 +69,7 @@ public class ArrayJoinerCacheNaiveImpl implements ArrayJoiner {
                 Vertex vertex = vertexIterator.next();
                 cache.loadOrFail(vertex);
                 traverse.pushToVisitResult(vertex);
-                traverse.accountVisit(vertex);
+                traverse.accountVertexVisit(vertex);
             }
         }
     }

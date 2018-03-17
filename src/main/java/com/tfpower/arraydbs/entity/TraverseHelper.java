@@ -1,6 +1,5 @@
 package com.tfpower.arraydbs.entity;
 
-import com.tfpower.arraydbs.util.Constants;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -25,6 +24,7 @@ public class TraverseHelper {
     private Map<String, Status> edgeStatus;
     private Map<Status, Set<String>> statusVertices;
     private Map<String, Integer> vertexVisitCount;
+    private Map<String, Integer> edgeVisitCount;
     private BiFunction<Integer, Vertex, Integer> accumulatorUpdater;
     private Integer accumulator;
 
@@ -34,6 +34,7 @@ public class TraverseHelper {
         this.visitResult = new LinkedList<>();
         this.visitBuffer = new LinkedList<>();
         this.vertexVisitCount = new HashMap<>();
+        this.edgeVisitCount = new HashMap<>();
         this.vertexStatus = new HashMap<>();
         this.edgeStatus = new HashMap<>();
         this.statusVertices = new HashMap<>(Status.values().length);
@@ -58,8 +59,12 @@ public class TraverseHelper {
         return visitResult.removeLast();
     }
 
-    public void accountVisit(Vertex vertex) {
+    public void accountVertexVisit(Vertex vertex) {
         vertexVisitCount.merge(vertex.getId(), 1, Integer::sum);
+    }
+
+    public void accountEdgeVisit(Edge edge) {
+        edgeVisitCount.merge(edge.getId(), 1, Integer::sum);
     }
 
     public void markVertex(Vertex vertex, Status status) {
@@ -131,8 +136,12 @@ public class TraverseHelper {
         vertexIds.forEach(vertex -> markVertex(vertex, status));
     }
 
-    public Map<String, Integer> getVisitCountsPerVertices() {
+    public Map<String, Integer> getVertexVisitCount() {
         return vertexVisitCount;
+    }
+
+    public Map<String, Integer> getEdgeVisitCount() {
+        return edgeVisitCount;
     }
 
     public void setAccumulatorUpdater(BiFunction<Integer, Vertex, Integer> accumulatorUpdater) {

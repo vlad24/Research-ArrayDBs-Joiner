@@ -60,10 +60,10 @@ public abstract class BiGraphParser {
 
 
     public static class BiGraphParseMetaInfo {
+        private String graphName;
         private String firstClassPrefix;
         private String secondClassPrefix;
         private Map<String, Object> additionalParams;
-        private String graphName;
 
 
         public String getSecondClassPrefix() {

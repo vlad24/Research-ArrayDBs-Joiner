@@ -1,6 +1,5 @@
 package com.tfpower.arraydbs.beans.impl;
 
-import com.sun.corba.se.impl.orbutil.graph.Graph;
 import com.tfpower.arraydbs.beans.ArrayJoiner;
 import com.tfpower.arraydbs.beans.Cache;
 import com.tfpower.arraydbs.entity.*;
@@ -48,7 +47,7 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
             logger.trace("Iteration: {}", iterationNumber);
             logger.trace("Processing: {}", currentVertex);
             traverse.markVertex(currentVertex, DONE);
-            traverse.accountVisit(currentVertex);
+            traverse.accountVertexVisit(currentVertex);
             traverse.pushToVisitResult(currentVertex);
             traverse.updateAccumulatorBy(currentVertex);
             cache.loadOrFail(currentVertex);
@@ -71,14 +70,15 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
                     logger.trace("Evicted {} to free up space for next vertex...", evicted);
                 }
                 currentVertex = nextVertex.get();
-                traverse.finishIf(processedEdges == edgesAmount);
                 processedEdges = traverse.countEdgesMarked(DONE);
+                traverse.finishIf(processedEdges == edgesAmount);
                 logger.trace("Edges left to process: {}", edgesAmount - processedEdges);
             } else {
                 traverse.finish();
             }
         }
         while (traverse.isNotFinished());
+        assert bGraph.getAllEdges().stream().allMatch(e -> traverse.statusOfEdge(e) == DONE);
         return JoinReport.fromGraphTraversal(traverse, this.toString(), bGraph.description());
     }
 

@@ -108,8 +108,8 @@ public class BiGraphDescription extends GraphDescription implements CSVExportabl
         elements.addAll(Arrays.asList(
                 String.valueOf(leftVerticesAmount),
                 String.valueOf(rightVerticesAmount),
-                String.valueOf(leftAvgDegree),
-                String.valueOf(rightAvgDegree),
+                String.format("%.2f", leftAvgDegree),
+                String.format("%.2f", rightAvgDegree),
                 String.valueOf(leftMaxDegree),
                 String.valueOf(rightMaxDegree)
         ));

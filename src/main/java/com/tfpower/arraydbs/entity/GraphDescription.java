@@ -92,7 +92,7 @@ public class GraphDescription implements CSVExportable{
                 graphName,
                 String.valueOf(edgesAmount),
                 String.valueOf(verticesAmount),
-                String.valueOf(avgDegree),
+                String.format("%.2f", avgDegree),
                 String.valueOf(maxDegree),
                 String.valueOf(minDegree)
         ).collect(toList());

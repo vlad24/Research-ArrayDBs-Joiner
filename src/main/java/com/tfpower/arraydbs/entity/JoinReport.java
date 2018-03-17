@@ -8,7 +8,6 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -43,6 +42,7 @@ public class JoinReport {
     public Integer getTotalWeight() {
         return totalWeight;
     }
+
     public String getJoinerName() {
         return joinerName;
     }
@@ -70,7 +70,7 @@ public class JoinReport {
                 joinerName,
                 graphDescription,
                 traversal.getVisitResult().stream().map(Vertex::getId).collect(Collectors.toList()),
-                new TreeMap<>(traversal.getVisitCountsPerVertices()),
+                new TreeMap<>(traversal.getVertexVisitCount()),
                 traversal.getAccumulator()
         );
         joinReport.computeLoadFreqStats();
@@ -103,7 +103,7 @@ public class JoinReport {
         private String rivalJoinerName;
         private Long baseLoadAmount;
         private Integer baseLoadMin;
-        private Double baseLoadAvg;
+        private BigDecimal baseLoadAvg;
         private Integer baseLoadMax;
         private Integer baseLoadWeight;
         private BigDecimal ratioLoadAmount;
@@ -120,7 +120,7 @@ public class JoinReport {
             this.rivalJoinerName = rivalJoinerName;
             this.baseLoadAmount = baseLoadAmount;
             this.baseLoadMin = baseLoadMin;
-            this.baseLoadAvg = baseLoadAvg;
+            this.baseLoadAvg = new BigDecimal(baseLoadAvg).setScale(JoinReportDiff.RATIO_SCALE, BigDecimal.ROUND_HALF_UP);
             this.baseLoadMax = baseLoadMax;
             this.baseLoadWeight = baseLoadWeight;
             this.ratioLoadAmount = new BigDecimal(ratioLoadAmount).setScale(JoinReportDiff.RATIO_SCALE, BigDecimal.ROUND_HALF_UP);
@@ -151,7 +151,7 @@ public class JoinReport {
         }
 
 
-        public Double getBaseLoadAvg() {
+        public BigDecimal getBaseLoadAvg() {
             return baseLoadAvg;
         }
 
@@ -201,10 +201,10 @@ public class JoinReport {
                     baseLoadAvg.toString(),
                     baseLoadMax.toString(),
                     baseLoadWeight.toString(),
-                    ratioLoadAmount.toString(),
                     ratioMinLoad.toString(),
                     ratioAvgLoad.toString(),
                     ratioMaxLoad.toString(),
+                    ratioLoadAmount.toString(),
                     ratioWeight.toString()
             ).collect(toList());
         }
@@ -220,10 +220,10 @@ public class JoinReport {
                     "baseLoadAvg",
                     "baseLoadMax",
                     "baseLoadWeight",
-                    "ratioLoadAmount",
                     "ratioMinLoad",
                     "ratioAvgLoad",
                     "ratioMaxLoad",
+                    "ratioLoadAmount",
                     "ratioWeight"
             ).collect(toList());
         }

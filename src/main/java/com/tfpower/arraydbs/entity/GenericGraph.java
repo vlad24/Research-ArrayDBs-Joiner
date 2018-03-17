@@ -7,7 +7,6 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import static com.tfpower.arraydbs.entity.TraverseHelper.Status.*;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 public class GenericGraph {
@@ -18,6 +17,7 @@ public class GenericGraph {
     protected Set<Vertex> vertices;
     protected Set<Edge> edges;
     protected Map<String, Vertex> vertexIndex;
+    protected Map<String, Edge> edgeIndex;
     protected Map<String, Set<Edge>> incidenceMap;
 
 
@@ -30,6 +30,7 @@ public class GenericGraph {
         name = this.getClass().getSimpleName() + "_" + this.hashCode();
         vertices = new HashSet<>();
         vertexIndex = new HashMap<>();
+        edgeIndex = new HashMap<>();
         incidenceMap = new HashMap<>();
         edges = new HashSet<>();
         vertexIndex = new HashMap<>();
@@ -45,6 +46,7 @@ public class GenericGraph {
             throw new IllegalArgumentException("Unknown vertices being connected");
         }
         edges.add(edge);
+        edgeIndex.putIfAbsent(edge.getId(), edge);
         incidenceMap.putIfAbsent(edge.getStart(), new HashSet<>());
         incidenceMap.putIfAbsent(edge.getEnd(), new HashSet<>());
         incidenceMap.get(edge.getStart()).add(edge);
@@ -78,10 +80,11 @@ public class GenericGraph {
         return vertices.size();
     }
 
+
     /**
-     *
-     * @param vertices
-     * @return
+     * Get vertices that are neighbors to the the provided set of vertices excluding the vertices themselves
+     * @param vertices vertices to scan the neighbours around
+     * @return vertices that are neighbors to the the provided set of vertices excluding the vertices themselves
      */
     public Set<Vertex> getVertexSurrounding(Set<Vertex> vertices) {
         Set<Vertex> surroundings = new HashSet<>();
@@ -96,6 +99,10 @@ public class GenericGraph {
     public Edge getExistingEdge(Vertex first, Vertex second){
         return getSingleEdgeBetween(first.getId(), second.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Edge between " + first + " and " + second + " not found"));
+    }
+
+    public Optional<Edge> getEdgeById(String id) {
+        return Optional.ofNullable(edgeIndex.get(id));
     }
 
     public Optional<Edge> getSingleEdgeBetween(String firstId, String secondId) {
@@ -122,7 +129,7 @@ public class GenericGraph {
         return edges;
     }
 
-    private Set<String> getAllEdgesIds() {
+    public Set<String> getAllEdgesIds() {
         return getAllEdges().stream().map(Edge::getId).collect(toSet());
     }
 

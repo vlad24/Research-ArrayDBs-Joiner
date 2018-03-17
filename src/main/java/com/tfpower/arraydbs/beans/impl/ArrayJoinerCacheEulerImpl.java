@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
@@ -47,6 +48,7 @@ public class ArrayJoinerCacheEulerImpl implements ArrayJoiner {
         traverse.pushToVisitBuffer(current);
         traverse.setAccumulatorUpdater((acc, v) -> acc + v.getWeight());
         Set<Edge> alreadyVisitedEdges = new HashSet<>();
+        cache.clear();
         while (traverse.isNotFinished()) {
             final Vertex examinedVertex = current;
             Set<Vertex> reachableNeighbours = graph.getNeighboursThat(
@@ -58,16 +60,10 @@ public class ArrayJoinerCacheEulerImpl implements ArrayJoiner {
                 traverse.pushToVisitResult(current);     // push to circuit
                 if (!cache.contains(current)) {
                     logger.trace("Trying to add {}", current);
-                    if (cache.getCurrentSize() < cache.getCapacity()) {
-                        cache.loadOrFail(current);
-                        logger.trace("Loaded to free space!");
-                    } else {
-                        Vertex evicted = cache.evict(Cache.oldest());
-                        logger.trace("Loaded instead of {}", evicted);
-                        cache.loadOrFail(current);
-                        logger.debug("Current cache: {}", cache.toString());
-                    }
-                    traverse.accountVisit(current);
+                    Optional<Vertex> evicted = cache.loadOrEvict(current, Cache.oldest());
+                    logger.trace("Loaded instead of {}", evicted);
+                    logger.debug("Current cache: {}", cache.toString());
+                    traverse.accountVertexVisit(current);
                     traverse.updateAccumulatorBy(current);
                 }
                 current = traverse.popFromVisitBuffer(); // reset the 'current' one
@@ -76,13 +72,18 @@ public class ArrayJoinerCacheEulerImpl implements ArrayJoiner {
                 Vertex next = Randomizer.pickRandomFrom(reachableNeighbours);
                 Edge edgeToNext = Randomizer.pickRandomFrom(graph.getAllEdgesBetween(current, next).stream().filter(e -> traverse.statusOfEdge(e) != DONE).collect(toSet()));
                 traverse.markEdge(edgeToNext, DONE);
+                traverse.accountEdgeVisit(edgeToNext);
                 assert !alreadyVisitedEdges.contains(edgeToNext);
                 alreadyVisitedEdges.add(edgeToNext);
                 current = next;
             }
             traverse.finishIf(traverse.getVisitBuffer().isEmpty() && reachableNeighbours.isEmpty());
         }
-        assert graph.getAllEdges().stream().map(traverse::statusOfEdge).allMatch(status -> status.equals(DONE));
+        assert graph.getAllEdges().stream().map(traverse::statusOfEdge).allMatch(status -> status.equals(DONE)):
+                "Not all vertices are eventually marked done";
+        assert traverse.getEdgeVisitCount().keySet().containsAll(graph.getAllEdgesIds()) : "Not all edges were traversed";
+        assert traverse.getEdgeVisitCount().values().stream().allMatch(f -> f == 1) : "Not all edges are processed only once";
+        assert traverse.getVisitResult().getFirst().equals(traverse.getVisitResult().getLast()) : "Not a circuit found";
     }
 
 

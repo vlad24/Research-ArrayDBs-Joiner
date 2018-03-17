@@ -9,12 +9,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.text.ParseException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -25,16 +24,14 @@ public class BiGraphFileIncListParser extends BiGraphParser {
 
     private  static  final Logger logger = LoggerFactory.getLogger(BiGraphFileIncListParser.class);
 
-    public static final String CONFIG_PREFIX = "@";
-    public static final String COMMENT_PREFIX = "#";
-    public static final String FIRST_CLASS_PREFIX = "firstClassPrefix=(.*)";
-    public static final String SECOND_CLASS_PREFIX = "secondClassPrefix=(.*)";
-    public static final String WEIGHT_SEP_REGEXP ="_";
-    public static final String ELEMENT_SEP_REGEXP ="\\s+";
-    public static final String NEIGHBOUR_SEP_REGEXP = "->";
-
-    public BiGraphFileIncListParser() {
-    }
+    private static final String CONFIG_PREFIX = "@";
+    private static final String COMMENT_PREFIX = "#";
+    private static final String FIRST_CLASS_RE = ".*firstClassPrefix=(.*?);.*";
+    private static final String SECOND_CLASS_RE = ".*secondClassPrefix=(.*?);.*";
+    private static final String GRAPH_NAME_REGEX = ".*graphName=(.*?);.*";
+    private static final String WEIGHT_SEP_REGEXP ="_";
+    private static final String ELEMENT_SEP_REGEXP ="\\s+";
+    private static final String NEIGHBOUR_SEP_REGEXP = "->";
 
     @Override
     protected boolean isMetaInfoLine(String line) {
@@ -47,15 +44,17 @@ public class BiGraphFileIncListParser extends BiGraphParser {
     }
 
     @Override
-    protected BiGraphParseMetaInfo parseMetaInfo(String configLine) throws ParseException {
+    protected BiGraphParseMetaInfo parseMetaInfo(String configLine){
         BiGraphParseMetaInfo config = new BiGraphParseMetaInfo();
-        config.setFirstClassPrefix(getSubstringMatchingRegex(FIRST_CLASS_PREFIX, configLine, "A"));
-        config.setSecondClassPrefix(getSubstringMatchingRegex(SECOND_CLASS_PREFIX, configLine, "B"));
+        config.setGraphName(getSubstringByRegex(GRAPH_NAME_REGEX, configLine, "some_graph"));
+        config.setFirstClassPrefix(getSubstringByRegex(FIRST_CLASS_RE, configLine, "A"));
+        config.setSecondClassPrefix(getSubstringByRegex(SECOND_CLASS_RE, configLine, "B"));
         return config;
     }
 
     @Override
     protected void fillBiGraph(List<String> contents, BiGraphParseMetaInfo metaInfo, final BiGraph biGraph) {
+        biGraph.setName(metaInfo.getGraphName());
         String firstClassVerticesRaw = contents.get(0).trim();
         String secondClassVerticesRaw = contents.get(1).trim();
         Arrays.stream(firstClassVerticesRaw.split(ELEMENT_SEP_REGEXP)).forEach(p -> biGraph.addLeftVertex(parseVertex(p)));
@@ -64,8 +63,8 @@ public class BiGraphFileIncListParser extends BiGraphParser {
         links.forEach(link ->
                 link.getRight().forEach(element ->
                         biGraph.addEdge(new Edge(link.getLeft(), element,
-                                biGraph.getVertex(link.getLeft()).get().getWeight()
-                                        + biGraph.getVertex(element).get().getWeight()
+                                biGraph.getExistingVertex(link.getLeft()).getWeight()
+                                        + biGraph.getExistingVertex(element).getWeight()
                                 ))
                 ));
     }
@@ -85,10 +84,9 @@ public class BiGraphFileIncListParser extends BiGraphParser {
     }
 
 
-    private String getSubstringMatchingRegex(String regex, String source, String defaultValue) {
-        logger.trace("Matching {} against {}", source, regex);
+    private String getSubstringByRegex(String regex, String source, String defaultValue) {
         Matcher matcher = Pattern.compile(regex).matcher(source);
-        if (matcher.groupCount() > 1) {
+        if (matcher.matches() && matcher.groupCount() >= 1){
             return matcher.group(1);
         } else {
             return defaultValue;

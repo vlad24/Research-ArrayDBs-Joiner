@@ -1,14 +1,25 @@
 package com.tfpower.arraydbs.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Random;
 
 public class Randomizer {
 
-    public static final int MAX_SMALL_INT = 20;
+    private final static Logger logger = LoggerFactory.getLogger(Randomizer.class);
 
-    private static Random random = new Random();
+    public static final int MAX_SMALL_INT = 20;
+    private static final long SEED = 1521233913850L;
+//            System.currentTimeMillis();
+
+    static {
+        logger.info("Initialized randomizer with seed = {}", SEED);
+    }
+
+    private static Random random = new Random(SEED);
 
 
     public static <T> T pickRandomFrom(Collection<T> collection) {
