@@ -2,10 +2,7 @@ package com.tfpower.arraydbs;
 
 import com.tfpower.arraydbs.beans.ArrayJoiner;
 import com.tfpower.arraydbs.beans.BiGraphProvider;
-import com.tfpower.arraydbs.beans.impl.ArrayJoinerCacheEulerImpl;
-import com.tfpower.arraydbs.beans.impl.ArrayJoinerCacheHeuristicsImpl;
-import com.tfpower.arraydbs.beans.impl.ArrayJoinerCacheNaiveImpl;
-import com.tfpower.arraydbs.beans.impl.BiGraphProviderByRandomImpl;
+import com.tfpower.arraydbs.beans.impl.*;
 import com.tfpower.arraydbs.config.AppConfig;
 import com.tfpower.arraydbs.entity.ExperimentConductor;
 import org.slf4j.Logger;
@@ -29,7 +26,8 @@ public class Main {
     public static void main(String[] args) {
         final Class<? extends ArrayJoiner> baseJoinerClass = ArrayJoinerCacheEulerImpl.class;
         final List<Class<? extends ArrayJoiner>> rivalClasses = Arrays.asList(
-                ArrayJoinerCacheHeuristicsImpl.class,
+                ArrayJoinerCacheHeuristicsMinFirstImpl.class,
+                ArrayJoinerCacheHeuristicsMaxFirstImpl.class,
                 ArrayJoinerCacheNaiveImpl.class
         );
         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);

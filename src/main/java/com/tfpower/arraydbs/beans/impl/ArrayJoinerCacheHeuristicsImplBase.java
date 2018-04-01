@@ -25,12 +25,12 @@ import static java.util.stream.Collectors.toSet;
  */
 @Component
 @Primary
-public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
+public abstract class ArrayJoinerCacheHeuristicsImplBase implements ArrayJoiner {
 
-    private final static Logger logger = LoggerFactory.getLogger(ArrayJoinerCacheHeuristicsImpl.class);
+    private final static Logger logger = LoggerFactory.getLogger(ArrayJoinerCacheHeuristicsImplBase.class);
 
     @Autowired
-    Cache<Vertex> cache;
+    protected Cache<Vertex> cache;
 
     public JoinReport join(BiGraph bGraph) {
         logger.info("{} is joining {}", this.toString(), bGraph.getName());
@@ -87,7 +87,7 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
     }
 
 
-    private Vertex pickFirstVertex(BiGraph biGraph) {
+    protected Vertex pickFirstVertex(BiGraph biGraph) {
         return biGraph.getAllVerticesIds().stream()
                 .map(biGraph::getExistingVertex)
                 .min(Comparator.comparingInt((ToIntFunction<Vertex>) biGraph::degree)
@@ -95,33 +95,9 @@ public class ArrayJoinerCacheHeuristicsImpl implements ArrayJoiner {
                 .orElseThrow(() -> new IllegalStateException("No min degree vertex found"));
     }
 
-    private Optional<Vertex> pickNext(Vertex current, BiGraph bGraph, TraverseHelper traverse) {
-        Set<Vertex> anchorVertices = cache.getAllValues();
-        assert anchorVertices.contains(current) : "Cache does not contain current vertex";
-        Set<Vertex> candidateVertices = bGraph.getEdgeSurrounding(anchorVertices).stream()
-                .filter(e -> traverse.statusOfEdge(e) != DONE)                                                         // remove all done edges
-                .map(e -> anchorVertices.contains(bGraph.getExistingVertex(e.getStart())) ? e.getEnd() : e.getStart()) // get only outer vertices
-                .map(bGraph::getExistingVertex)                                                                        //map to vertex objects
-                .collect(toSet());
-        if (candidateVertices.isEmpty() && traverse.countEdgesMarked(DONE) != bGraph.getEdgeAmount()){
-            candidateVertices = bGraph.getAllEdges().stream()
-                    .filter(edge -> traverse.statusOfEdge(edge) != DONE)
-                    .map(Edge::nibs)
-                    .reduce(new HashSet<>(), (accSet, nibs) -> {
-                        accSet.addAll(nibs);
-                        return accSet;
-                    })
-                    .stream().map(bGraph::getExistingVertex).collect(toSet());
-        }
-        return candidateVertices.stream()
-                .min(comparing(traverse::statusOfVertex)                                              // first pick untouched ones
-                        .thenComparing(neighbour -> degreeExcludingDone(bGraph, traverse, neighbour)) // then min by done-degree
-                        .thenComparing(neighbour -> -neighbour.getWeight())                           // then the most light one
-                );
+    protected abstract Optional<Vertex> pickNext(Vertex current, BiGraph bGraph, TraverseHelper traverse);
 
-    }
-
-    private Integer degreeExcludingDone(BiGraph bGraph, TraverseHelper traverseHelper, Vertex vertex) {
+    protected Integer degreeExcludingDone(BiGraph bGraph, TraverseHelper traverseHelper, Vertex vertex) {
         Set<Vertex> neighborsByDoneEdges = bGraph.getNeighboursThat(
                 nbr -> traverseHelper.statusOfEdge(bGraph.getExistingEdge(nbr, vertex)) == DONE,
                 vertex
