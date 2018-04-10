@@ -47,10 +47,10 @@ public class BiGraphProviderByRandomImpl implements BiGraphProvider {
         for (int i = 0; i < graphsCount; i++) {
             BiGraph graph = new BiGraph("Graph_" + i);
             IntStream.range(1, 1 + leftSetCapacity)
-                    .mapToObj(j -> new Vertex(LEFT_PREFIX + j, Constants.EMPTY, Randomizer.randomPositiveSmallInt()))
+                    .mapToObj(j -> new Vertex(LEFT_PREFIX + j, Constants.EMPTY, 1))
                     .forEach(graph::addLeftVertex);
             IntStream.range(1, 1 + rightSetCapacity)
-                    .mapToObj(j -> new Vertex(RIGHT_PREFIX + j, Constants.EMPTY, Randomizer.randomPositiveSmallInt()))
+                    .mapToObj(j -> new Vertex(RIGHT_PREFIX + j, Constants.EMPTY, 1))
                     .forEach(graph::addRightVertex);
             Set<Set<String>> edgesNibs = new HashSet<>(edgesGenerateAttempts);
             Set<String> connectedLeftVertices = new HashSet<>();
@@ -66,7 +66,7 @@ public class BiGraphProviderByRandomImpl implements BiGraphProvider {
                 } else {
                     currentRight = vertexToResumeFrom;
                 }
-                Edge edge = new Edge(currentLeft, currentRight, Randomizer.randomPositiveSmallInt());
+                Edge edge = new Edge(currentLeft, currentRight, 2);
                 Set<String> edgeNibs = edge.nibs();
                 if (!edgesNibs.contains(edgeNibs)){
                     edgesNibs.add(edgeNibs);

@@ -1,22 +1,19 @@
 package com.tfpower.arraydbs.beans.impl;
 
-import com.tfpower.arraydbs.beans.ArrayJoiner;
-import com.tfpower.arraydbs.beans.Cache;
-import com.tfpower.arraydbs.entity.*;
+import com.tfpower.arraydbs.entity.BiGraph;
+import com.tfpower.arraydbs.entity.Edge;
+import com.tfpower.arraydbs.entity.TraverseHelper;
+import com.tfpower.arraydbs.entity.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.ToIntFunction;
 
 import static com.tfpower.arraydbs.entity.TraverseHelper.Status.DONE;
-import static com.tfpower.arraydbs.entity.TraverseHelper.Status.UNTOUCHED;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toSet;
 
@@ -51,7 +48,7 @@ public class ArrayJoinerCacheHeuristicsMinFirstImpl extends ArrayJoinerCacheHeur
         }
         return candidateVertices.stream()
                 .min(comparing(traverse::statusOfVertex)                                              // first pick untouched ones
-                        .thenComparing(neighbour -> degreeExcludingDone(bGraph, traverse, neighbour)) // then min by done-degree
+                        .thenComparing(neighbour -> uDegree(bGraph, traverse, neighbour)) // then min by done-degree
                         .thenComparing(neighbour -> -neighbour.getWeight())                           // then the most light one
                 );
 

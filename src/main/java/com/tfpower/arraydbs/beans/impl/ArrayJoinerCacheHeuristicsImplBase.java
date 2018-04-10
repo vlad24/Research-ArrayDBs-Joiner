@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.ToIntFunction;
@@ -66,7 +65,7 @@ public abstract class ArrayJoinerCacheHeuristicsImplBase implements ArrayJoiner 
                     Vertex evicted = cache.evict(
                             comparing((Cache.CacheEntry<Vertex> v) ->
                                     bGraph.areDirectlyConnected(v.getValue(), nextVertex.get()) ? 0 : 1)
-                                    .thenComparing(vertex -> -degreeExcludingDone(bGraph, traverse, vertex.getValue()))
+                                    .thenComparing(vertex -> -uDegree(bGraph, traverse, vertex.getValue()))
                     );
                     logger.trace("Evicted {} to free up space for next vertex...", evicted);
                 }
@@ -91,13 +90,13 @@ public abstract class ArrayJoinerCacheHeuristicsImplBase implements ArrayJoiner 
         return biGraph.getAllVerticesIds().stream()
                 .map(biGraph::getExistingVertex)
                 .min(Comparator.comparingInt((ToIntFunction<Vertex>) biGraph::degree)
-                        .thenComparing(Vertex::getWeight))
+                        .thenComparing(vertex -> -vertex.getWeight()))
                 .orElseThrow(() -> new IllegalStateException("No min degree vertex found"));
     }
 
     protected abstract Optional<Vertex> pickNext(Vertex current, BiGraph bGraph, TraverseHelper traverse);
 
-    protected Integer degreeExcludingDone(BiGraph bGraph, TraverseHelper traverseHelper, Vertex vertex) {
+    protected Integer uDegree(BiGraph bGraph, TraverseHelper traverseHelper, Vertex vertex) {
         Set<Vertex> neighborsByDoneEdges = bGraph.getNeighboursThat(
                 nbr -> traverseHelper.statusOfEdge(bGraph.getExistingEdge(nbr, vertex)) == DONE,
                 vertex
