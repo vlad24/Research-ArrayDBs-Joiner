@@ -41,6 +41,12 @@ public class TraverseHelper {
         this.accumulator = 0;
         accumulatorUpdater = (acc, v) -> acc;
     }
+    
+    public void accountVertexVisit(Vertex vertex){
+        pushToVisitResult(vertex);
+        updateCounterAfterVisit(vertex);
+        updateAccumulatorBy(vertex);
+    }
 
     public void pushToVisitBuffer(Vertex vertex) {
         failIfFinished();
@@ -62,7 +68,7 @@ public class TraverseHelper {
         return visitResult.removeLast();
     }
 
-    public void accountVertexVisit(Vertex vertex) {
+    public void updateCounterAfterVisit(Vertex vertex) {
         failIfFinished();
         vertexVisitCount.merge(vertex.getId(), 1, Integer::sum);
     }

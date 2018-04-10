@@ -27,6 +27,7 @@ public class ArrayJoinerCacheNaiveImpl implements ArrayJoiner {
     @Autowired
     Cache<Vertex> cache;
 
+    //TODO test
     public JoinReport join(BiGraph bGraph) {
         Pair<Set<Vertex>, Set<Vertex>> prioritize = prioritizeSets(bGraph);
         Set<Vertex> smallestVertexSet = prioritize.getLeft();
@@ -35,17 +36,25 @@ public class ArrayJoinerCacheNaiveImpl implements ArrayJoiner {
         TraverseHelper traverse = new TraverseHelper();
         traverse.setAccumulatorUpdater((acc, vertex) -> acc + vertex.getWeight());
         fillCache(smallestVertexSet, traverse);
-        for (Vertex current : smallestVertexSet){
-            Set<Vertex> neighbours = bGraph.getNeighbours(current);
+        for (Vertex anchorVertex : smallestVertexSet){
+            if (!cache.contains(anchorVertex)){
+                cache.loadOrEvict(anchorVertex,
+                        Comparator.comparingInt((Cache.CacheEntry<Vertex> o) -> smallestVertexSet.contains(o.getValue()) ? 1 : 0)
+                                .thenComparing(Cache.byAge())
+                );
+                traverse.accountVertexVisit(anchorVertex);
+            }
+            Set<Vertex> neighbours = bGraph.getNeighbours(anchorVertex);
             for (Vertex neighbour : neighbours){
                 if (!cache.contains(neighbour)){
-                    Optional<Vertex> evicted = cache.loadOrEvict(neighbour, Cache.byFreshness());
+                    Optional<Vertex> evicted = cache.loadOrEvict(neighbour,
+                            Comparator.comparingInt((Cache.CacheEntry<Vertex> o) -> smallestVertexSet.contains(o.getValue()) ? 0 : 1)
+                                    .thenComparing(Cache.byAge())
+                    );
                     assert !evicted.isPresent() || biggerVertexSet.contains(evicted.get());
-                    traverse.pushToVisitResult(neighbour);
                     traverse.accountVertexVisit(neighbour);
-                    traverse.updateAccumulatorBy(neighbour);
                 }
-                traverse.markEdge(bGraph.getExistingEdge(current, neighbour), DONE);
+                traverse.markEdge(bGraph.getExistingEdge(anchorVertex, neighbour), DONE);
             }
         }
         assert bGraph.getAllEdges().stream().map(traverse::statusOfEdge).allMatch(status -> status.equals(DONE)) : "Not all edges are processed";
@@ -55,22 +64,12 @@ public class ArrayJoinerCacheNaiveImpl implements ArrayJoiner {
 
     private void fillCache(Set<Vertex> smallestVertexSet, TraverseHelper traverse) {
         int spareSpace = cache.getCapacity() - smallestVertexSet.size();
-        if (spareSpace > 0){
-            // load the entire operand
-            for (Vertex vertex : smallestVertexSet){
-                cache.loadOrFail(vertex);
-                traverse.pushToVisitResult(vertex);
-                traverse.accountVertexVisit(vertex);
-            }
-        } else {
-            // load only part of it leaving space for one more from another operand
-            Iterator<Vertex> vertexIterator = smallestVertexSet.iterator();
-            for (int i = 0; i < cache.getCapacity() - 1 && vertexIterator.hasNext(); i++){
-                Vertex vertex = vertexIterator.next();
-                cache.loadOrFail(vertex);
-                traverse.pushToVisitResult(vertex);
-                traverse.accountVertexVisit(vertex);
-            }
+        int loopLimit = spareSpace > 0 ? smallestVertexSet.size() : cache.getCapacity() - 1;
+        Iterator<Vertex> vertexIterator = smallestVertexSet.iterator();
+        for (int i = 0; i < loopLimit && vertexIterator.hasNext(); i++){
+            Vertex vertex = vertexIterator.next();
+            cache.loadOrFail(vertex);
+            traverse.accountVertexVisit(vertex);
         }
     }
 

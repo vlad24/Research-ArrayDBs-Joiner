@@ -47,7 +47,7 @@ public abstract class ArrayJoinerCacheHeuristicsImplBase implements ArrayJoiner 
             logger.trace("Iteration: {}", iterationNumber);
             logger.trace("Processing: {}", currentVertex);
             traverse.markVertex(currentVertex, DONE);
-            traverse.accountVertexVisit(currentVertex);
+            traverse.updateCounterAfterVisit(currentVertex);
             traverse.pushToVisitResult(currentVertex);
             traverse.updateAccumulatorBy(currentVertex);
             cache.loadOrFail(currentVertex);

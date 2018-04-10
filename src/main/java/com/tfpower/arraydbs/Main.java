@@ -31,7 +31,7 @@ public class Main {
                 ArrayJoinerCacheNaiveImpl.class
         );
         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
-        BiGraphProvider testDataProvider = context.getBean(BiGraphProviderByRandomImpl.class);
+        BiGraphProvider testDataProvider = context.getBean(BiGraphProviderFromFileImpl.class);
         ArrayJoiner baseJoiner = context.getBean(baseJoinerClass);
         List<ArrayJoiner> rivalJoiners = rivalClasses.stream().map(context::getBean).collect(Collectors.toList());
         List<String> csvResult = ExperimentConductor.conductExperiments(baseJoiner, rivalJoiners, testDataProvider);
