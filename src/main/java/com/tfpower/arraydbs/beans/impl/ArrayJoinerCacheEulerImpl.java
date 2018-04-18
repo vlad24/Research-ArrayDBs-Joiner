@@ -46,14 +46,15 @@ public class ArrayJoinerCacheEulerImpl implements ArrayJoiner {
         Vertex current = vertexIterator.next();
         Vertex prev = current;
         cache.loadOrFail(current);
-        pathTraverse.updateCounterAfterVisit(current);
+        pathTraverse.accountVertexVisit(current);
         while (vertexIterator.hasNext() && pathTraverse.isNotFinished()){
             prev = current;
             current = vertexIterator.next();
             if (!cache.contains(current)) {
                 cache.loadOrEvict(current, Cache.anyExceptFor(prev).thenComparing(Cache.byAge()));
-                pathTraverse.updateAccumulatorBy(current);
-                pathTraverse.updateCounterAfterVisit(current);
+                pathTraverse.accountVertexVisit(current);
+//                pathTraverse.updateAccumulatorBy(current);
+//                pathTraverse.updateCounterAfterVisit(current);
             }
             Set<Edge> edgesInCache = graph.getEdgesAround(current, cache.getAllValues());
             pathTraverse.markEdges(edgesInCache, DONE);

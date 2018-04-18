@@ -27,11 +27,11 @@ public class Main {
         final Class<? extends ArrayJoiner> baseJoinerClass = ArrayJoinerCacheEulerImpl.class;
         final List<Class<? extends ArrayJoiner>> rivalClasses = Arrays.asList(
                 ArrayJoinerCacheHeuristicsMinFirstImpl.class,
-                ArrayJoinerCacheHeuristicsMaxFirstImpl.class,
-                ArrayJoinerCacheNaiveImpl.class
+                ArrayJoinerCacheNaiveImpl.class,
+                ArrayJoinerCacheHeuristicsMaxFirstImpl.class
         );
         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
-        BiGraphProvider testDataProvider = context.getBean(BiGraphProviderFromFileImpl.class);
+        BiGraphProvider testDataProvider = context.getBean(BiGraphProviderByRandomImpl.class);
         ArrayJoiner baseJoiner = context.getBean(baseJoinerClass);
         List<ArrayJoiner> rivalJoiners = rivalClasses.stream().map(context::getBean).collect(Collectors.toList());
         List<String> csvResult = ExperimentConductor.conductExperiments(baseJoiner, rivalJoiners, testDataProvider);

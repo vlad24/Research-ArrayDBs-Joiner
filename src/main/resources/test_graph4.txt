@@ -1,0 +1,8 @@
+@ graphName=Graph4_baumann; firstClassPrefix=L; secondClassPrefix=R;
+A1_1  A2_1  A3_1  A4_1
+B1_1  B2_1  B3_1  B4_1  B5_1
+
+A1 -> B1 B2 B3
+A2 -> B2
+A3 -> B2 B3 B4 B5
+A4 -> B2 B5

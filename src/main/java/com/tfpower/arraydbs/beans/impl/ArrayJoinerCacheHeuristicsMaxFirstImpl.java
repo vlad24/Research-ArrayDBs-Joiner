@@ -48,7 +48,7 @@ public class ArrayJoinerCacheHeuristicsMaxFirstImpl extends ArrayJoinerCacheHeur
         }
         return candidateVertices.stream()
                 .min(comparing(traverse::statusOfVertex)                                              // first pick untouched ones
-                        .thenComparing(neighbour -> -uDegree(bGraph, traverse, neighbour)) // then min by done-degree
+                        .thenComparing(neighbour -> -uDegree(bGraph, traverse, neighbour))            // then max by done-degree
                         .thenComparing(neighbour -> -neighbour.getWeight())                           // then the most light one
                 );
 
