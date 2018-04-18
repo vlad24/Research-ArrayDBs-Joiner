@@ -16,7 +16,7 @@ public class ExperimentConductor {
 
     private final static Logger logger = LoggerFactory.getLogger(ExperimentConductor.class);
 
-    public static Map<String, Object> conductExperiments(ArrayJoiner baseJoiner, List<ArrayJoiner> rivalJoiners, BiGraphProvider testDataProvider) {
+    public static ExperimentResult conductExperiments(ArrayJoiner baseJoiner, List<ArrayJoiner> rivalJoiners, BiGraphProvider testDataProvider) {
         List<BiGraph> testGraphs = testDataProvider.getTestGraphs();
         List<String> csvResultRows = new ArrayList<>(1 + testGraphs.size());
         boolean csvHeaderFormed = false;
@@ -40,9 +40,39 @@ public class ExperimentConductor {
                 logger.debug("Join rival: {}", joinReportRival.toString());
                 csvResultRows.add(rivalCsvRow);
             }
-            result.put("loadAmountAvg_" + rivalJoiner.toString(), loadAmounts9.stream().reduce(BigDecimal::add).9)
+            result.put("loadAmountAvg_" + rivalJoiner.toString(), loadAmounts.stream().reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .divide(BigDecimal.valueOf(loadAmounts.size()), BigDecimal.ROUND_HALF_DOWN));
+            result.put("maxAmountAvg_" + rivalJoiner.toString(), maxLoadAmounts.stream().reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .divide(BigDecimal.valueOf(loadAmounts.size()), BigDecimal.ROUND_HALF_DOWN));
+        }
+        ExperimentResult experimentResult = new ExperimentResult();
+        experimentResult.setStats(result);
+        experimentResult.setCsvDetails(csvResultRows);
+        return experimentResult;
+    }
+
+    public static class ExperimentResult {
+        Map<String, Object> stats;
+        List<String> csvDetails;
+
+
+        public Map<String, Object> getStats() {
+            return stats;
         }
 
-        return csvResultRows;
+
+        public void setStats(Map<String, Object> stats) {
+            this.stats = stats;
+        }
+
+
+        public List<String> getCsvDetails() {
+            return csvDetails;
+        }
+
+
+        public void setCsvDetails(List<String> csvDetails) {
+            this.csvDetails = csvDetails;
+        }
     }
 }

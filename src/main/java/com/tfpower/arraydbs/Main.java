@@ -12,6 +12,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.joining;
@@ -34,8 +35,11 @@ public class Main {
         BiGraphProvider testDataProvider = context.getBean(BiGraphProviderByRandomImpl.class);
         ArrayJoiner baseJoiner = context.getBean(baseJoinerClass);
         List<ArrayJoiner> rivalJoiners = rivalClasses.stream().map(context::getBean).collect(Collectors.toList());
-        List<String> csvResult = ExperimentConductor.conductExperiments(baseJoiner, rivalJoiners, testDataProvider);
-        logger.info("Program is over. CSV diffs:\n\n{}", csvResult.stream().collect(joining("\n")));
+        ExperimentConductor.ExperimentResult experimentResult = ExperimentConductor.conductExperiments(baseJoiner, rivalJoiners, testDataProvider);
+        logger.info("Program is over. CSV diffs:\n\n{}", experimentResult.getCsvDetails().stream().collect(joining("\n")));
+        logger.info("Some stats: \n\n{}", experimentResult.getStats().entrySet().stream()
+                .map(e -> e.getKey() + "\t" + e.getValue())
+                .collect(joining("\n")));
     }
 
 }
