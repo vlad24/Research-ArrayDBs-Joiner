@@ -56,7 +56,7 @@ public class ArrayJoinerCacheEulerImpl implements ArrayJoiner {
 //                pathTraverse.updateAccumulatorBy(current);
 //                pathTraverse.updateCounterAfterVisit(current);
             }
-            Set<Edge> edgesInCache = graph.getEdgesAround(current, cache.getAllValues());
+            Set<Edge> edgesInCache = graph.getEdgesBetween(current, cache.getAllValues());
             pathTraverse.markEdges(edgesInCache, DONE);
             List<Edge> notProcessed = graph.getAllEdges().stream().filter(e -> pathTraverse.statusOfEdge(e) != DONE).collect(toList());
             pathTraverse.finishIf(notProcessed.size() == 0);

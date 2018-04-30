@@ -52,7 +52,7 @@ public abstract class ArrayJoinerCacheHeuristicsImplBase implements ArrayJoiner 
             traverse.updateAccumulatorBy(currentVertex);
             cache.loadOrFail(currentVertex);
             logger.trace("Cache has been updated by {}.\tCurrent: {}", currentVertex, cache);
-            Set<Edge> edgesInCache = bGraph.getEdgesAround(currentVertex, cache.getAllValues());
+            Set<Edge> edgesInCache = bGraph.getEdgesBetween(currentVertex, cache.getAllValues());
             logger.trace("Processing edges that cache allows: {}", edgesInCache);
             edgesInCache.forEach(e -> traverse.markEdge(e, DONE));
             logger.trace("Edge status:   {}", traverse.getEdgeStatus());

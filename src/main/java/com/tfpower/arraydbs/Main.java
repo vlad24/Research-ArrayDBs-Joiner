@@ -2,7 +2,10 @@ package com.tfpower.arraydbs;
 
 import com.tfpower.arraydbs.beans.ArrayJoiner;
 import com.tfpower.arraydbs.beans.BiGraphProvider;
-import com.tfpower.arraydbs.beans.impl.*;
+import com.tfpower.arraydbs.beans.impl.ArrayJoinerCacheEulerImpl;
+import com.tfpower.arraydbs.beans.impl.ArrayJoinerCacheHeuristicsMinFirstImpl;
+import com.tfpower.arraydbs.beans.impl.ArrayJoinerCacheNaiveImpl;
+import com.tfpower.arraydbs.beans.impl.BiGraphProviderByRandomImpl;
 import com.tfpower.arraydbs.config.AppConfig;
 import com.tfpower.arraydbs.entity.ExperimentConductor;
 import org.slf4j.Logger;
@@ -12,7 +15,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.joining;
@@ -28,8 +30,7 @@ public class Main {
         final Class<? extends ArrayJoiner> baseJoinerClass = ArrayJoinerCacheEulerImpl.class;
         final List<Class<? extends ArrayJoiner>> rivalClasses = Arrays.asList(
                 ArrayJoinerCacheHeuristicsMinFirstImpl.class,
-                ArrayJoinerCacheNaiveImpl.class,
-                ArrayJoinerCacheHeuristicsMaxFirstImpl.class
+                ArrayJoinerCacheNaiveImpl.class
         );
         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
         BiGraphProvider testDataProvider = context.getBean(BiGraphProviderByRandomImpl.class);

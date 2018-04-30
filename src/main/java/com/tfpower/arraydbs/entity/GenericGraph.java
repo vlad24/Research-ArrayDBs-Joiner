@@ -166,7 +166,7 @@ public class GenericGraph {
      */
     public Set<Edge> getEdgeSurrounding(Set<Vertex> vertices) {
         Set<Vertex> vertexSurrounding = getVertexSurrounding(vertices);
-        Set<Edge> edgeSurroundings = vertices.stream().map(v -> getEdgesAround(v, vertexSurrounding))
+        Set<Edge> edgeSurroundings = vertices.stream().map(v -> getEdgesBetween(v, vertexSurrounding))
                 .reduce(new HashSet<>(), (acc, edges) -> {
                     acc.addAll(edges);
                     return acc;
@@ -199,7 +199,7 @@ public class GenericGraph {
      * @param surroundingVertices vertex to which scan edges for
      * @return  edges that connect vertex with surroundings
      */
-    public Set<Edge> getEdgesAround(Vertex anchorVertex, Set<Vertex> surroundingVertices) {
+    public Set<Edge> getEdgesBetween(Vertex anchorVertex, Set<Vertex> surroundingVertices) {
         Set<Edge> set = new HashSet<>();
         for (Vertex v : surroundingVertices) {
             Set<Edge> incidentEdges = getAllEdgesBetween(anchorVertex, v);
